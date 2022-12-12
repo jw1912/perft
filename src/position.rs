@@ -93,9 +93,8 @@ pub fn do_move(m: u16) -> bool {
             } else if flag == DBL {
                 POS.state.enp = match POS.mover {WHITE => to - 8, BLACK => to + 8, _ => unreachable_unchecked()} as u16;
             } else if flag >= PROMO {
-                let ppc: usize = (((flag >> 12) & 3) + 1) as usize;
                 POS.piece[mpc] ^= t;
-                POS.piece[ppc] ^= t;
+                POS.piece[(((flag >> 12) & 3) + 1) as usize] ^= t;
             }
         }
         KING => {
@@ -130,7 +129,8 @@ pub fn undo_move() {
 
     POS.mover ^= 1;
     POS.state = state.state;
-    toggle!(POS.mover, mpc, f | t);
+    let mov: u64 = f | t;
+    toggle!(POS.mover, mpc, mov);
     if cpc != EMPTY { toggle!(opp, cpc, t); }
     match mpc as usize {
         PAWN =>  {
@@ -138,9 +138,8 @@ pub fn undo_move() {
                 let p: u64 = match opp { WHITE => t << 8, BLACK => t >> 8, _ => unreachable_unchecked() };
                 toggle!(opp, PAWN, p);
             } else if flag >= PROMO {
-                let promo_pc: u16 = ((flag >> 12) & 3) + 1;
                 POS.piece[mpc] ^= t;
-                POS.piece[promo_pc as usize] ^= t;
+                POS.piece[(((flag >> 12) & 3) + 1) as usize] ^= t;
             }
         }
         KING => {
