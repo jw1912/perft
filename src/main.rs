@@ -1,9 +1,13 @@
 mod typedefs;
 mod consts;
 mod position;
+mod movegen;
 
 pub use typedefs::*;
 pub use consts::*;
+use movegen::gen_moves;
+use position::{do_move, undo_move};
+use std::time::Instant;
 
 static mut POS: Position = Position { piece: [0; 6], side: [0; 2], mover: 0, state: State { enp: 0, halfm: 0, rights: 0 } };
 static mut STACK: [MoveState; 128] = [MoveState {state: State { enp: 0, halfm: 0, rights: 0 }, m: 0, mpc: 0, cpc: 0} ; 128];
@@ -35,8 +39,30 @@ fn main() {
     unsafe {
     println!("Hello, world!");
     parse_fen(STARTPOS);
+    for d in 0..7 + 1 {
+        let now = Instant::now();
+        let count: u64 = perft(d);
+        let time = now.elapsed();
+        println!("info depth {} time {} nodes {count} Mnps {:.2}", d, time.as_millis(), count as f64 / time.as_micros() as f64);
+    }
     }
 }
+
+fn perft(depth_left: u8) -> u64 {
+    if depth_left == 0 { return 1 }
+    let mut moves = MoveList::default();
+    gen_moves(&mut moves);
+    let mut positions: u64 = 0;
+    for m_idx in 0..moves.len {
+        let m: u16 = moves.list[m_idx];
+        if do_move(m) { continue }
+        let count: u64 = perft(depth_left - 1);
+        positions += count;
+        undo_move();
+    }
+    positions
+}
+
 
 fn sq_to_idx(sq: &str) -> u16 {
     let chs: Vec<char> = sq.chars().collect();

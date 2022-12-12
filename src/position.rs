@@ -61,9 +61,9 @@ pub fn is_in_check() -> bool {
 unsafe fn get_piece(bit: u64) -> usize {
     (POS.piece[KNIGHT] & bit > 0) as usize
     + BISHOP * (POS.piece[BISHOP] & bit > 0) as usize
-    + ROOK * (POS.piece[BISHOP] & bit > 0) as usize
-    + QUEEN * (POS.piece[BISHOP] & bit > 0) as usize
-    + KING * (POS.piece[BISHOP] & bit > 0) as usize
+    + ROOK * (POS.piece[ROOK] & bit > 0) as usize
+    + QUEEN * (POS.piece[QUEEN] & bit > 0) as usize
+    + KING * (POS.piece[KING] & bit > 0) as usize
     + EMPTY * (!(POS.side[0] | POS.side[1]) & bit > 0) as usize
 } 
 
