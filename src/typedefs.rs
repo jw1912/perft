@@ -13,7 +13,7 @@ pub struct State {
     pub rights: u8,
 }
 
-#[derive(Copy, Clone, Default)]
+#[derive(Copy, Clone)]
 pub struct MoveState {
     pub state: State,
     pub m: u16,
@@ -32,10 +32,10 @@ impl Default for MoveList {
     }
 }
 
-impl MoveList {
-    #[inline(always)]
-    pub fn push(&mut self, m: u16) {
-        self.list[self.len] = m;
-        self.len += 1;
-    }
+#[derive(Clone, Copy)]
+pub struct Mask {
+    pub bitmask: u64,
+    pub diag: u64,
+    pub antidiag: u64,
+    pub file: u64,
 }

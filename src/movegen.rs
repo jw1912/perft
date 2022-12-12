@@ -3,14 +3,15 @@ use std::hint::unreachable_unchecked;
 
 
 macro_rules! pop_lsb {($idx:expr, $x:expr) => {$idx = $x.trailing_zeros() as u16; $x &= $x - 1}}
+macro_rules! push_move {($l:expr, $m:expr) => {$l.list[$l.len] = $m; $l.len += 1;}}
 
 #[inline(always)]
-fn encode_moves(move_list: &mut MoveList, mut attacks: u64, from: u16, flag: u16) {
+fn encode_moves(moves: &mut MoveList, mut attacks: u64, from: u16, flag: u16) {
     let f: u16 = from << 6;
     let mut aidx: u16;
     while attacks > 0 {
         pop_lsb!(aidx, attacks);
-        move_list.push(flag | f | aidx);
+        push_move!(moves, flag | f | aidx);
     }
 }
 
@@ -57,7 +58,7 @@ unsafe fn piece_moves<const PIECE: usize>(move_list: &mut MoveList, occ: u64, fr
 }
 
 #[inline(always)]
-unsafe fn pawn_captures(move_list: &mut MoveList, mut attackers: u64, opps: u64) {
+unsafe fn pawn_captures(moves: &mut MoveList, mut attackers: u64, opps: u64) {
     let (mut from, mut cidx, mut f): (u16, u16, u16);
     let mut attacks: u64;
     let mut promo_attackers: u64 = attackers & PENRANK[POS.mover];
@@ -65,7 +66,7 @@ unsafe fn pawn_captures(move_list: &mut MoveList, mut attackers: u64, opps: u64)
     while attackers > 0 {
         pop_lsb!(from, attackers);
         attacks = PATT[POS.mover][from as usize] & opps;
-        encode_moves(move_list, attacks, from, CAP);
+        encode_moves(moves, attacks, from, CAP);
     }
     while promo_attackers > 0 {
         pop_lsb!(from, promo_attackers);
@@ -73,21 +74,21 @@ unsafe fn pawn_captures(move_list: &mut MoveList, mut attackers: u64, opps: u64)
         while attacks > 0 {
             pop_lsb!(cidx, attacks);
             f = from << 6;
-            move_list.push(QPROMO_CAP | cidx | f);
-            move_list.push(PROMO_CAP  | cidx | f);
-            move_list.push(BPROMO_CAP | cidx | f);
-            move_list.push(RPROMO_CAP | cidx | f);
+            push_move!(moves, QPROMO_CAP | cidx | f);
+            push_move!(moves, PROMO_CAP  | cidx | f);
+            push_move!(moves, BPROMO_CAP | cidx | f);
+            push_move!(moves, RPROMO_CAP | cidx | f);
         }
     }
 }
 
 #[inline(always)]
-unsafe fn en_passants(move_list: &mut MoveList, pawns: u64, sq: u16) {
+unsafe fn en_passants(moves: &mut MoveList, pawns: u64, sq: u16) {
     let mut attackers: u64 = PATT[POS.mover ^ 1][sq as usize] & pawns;
     let mut cidx: u16;
     while attackers > 0 {
         pop_lsb!(cidx, attackers);
-        move_list.push( ENP | sq | cidx << 6 );
+        push_move!(moves, ENP | sq | cidx << 6 );
     }
 }
 
@@ -109,7 +110,7 @@ fn idx_shift<const SIDE: usize, const AMOUNT: u16>(idx: u16) -> u16 {
     }
 }
 
-fn pawn_pushes<const SIDE: usize>(move_list: &mut MoveList, occupied: u64, pawns: u64) {
+fn pawn_pushes<const SIDE: usize>(moves: &mut MoveList, occupied: u64, pawns: u64) {
     let empty: u64 = !occupied;
     let mut pushable_pawns: u64 = shift::<SIDE, 8>(empty) & pawns;
     let mut dbl_pushable_pawns: u64 = shift::<SIDE, 8>(shift::<SIDE, 8>(empty & DBLRANK[SIDE]) & empty) & pawns;
@@ -118,42 +119,42 @@ fn pawn_pushes<const SIDE: usize>(move_list: &mut MoveList, occupied: u64, pawns
     let mut idx: u16;
     while pushable_pawns > 0 {
         pop_lsb!(idx, pushable_pawns);
-        move_list.push(idx_shift::<SIDE, 8>(idx) | idx << 6);
+        push_move!(moves, idx_shift::<SIDE, 8>(idx) | idx << 6);
     }
     while promotable_pawns > 0 {
         pop_lsb!(idx, promotable_pawns);
         let to: u16 = idx_shift::<SIDE, 8>(idx);
         let f: u16 = idx << 6;
-        move_list.push(QPROMO | to | f);
-        move_list.push(PROMO  | to | f);
-        move_list.push(BPROMO | to | f);
-        move_list.push(RPROMO | to | f);
+        push_move!(moves, QPROMO | to | f);
+        push_move!(moves, PROMO  | to | f);
+        push_move!(moves, BPROMO | to | f);
+        push_move!(moves, RPROMO | to | f);
     }
     while dbl_pushable_pawns > 0 {
         pop_lsb!(idx, dbl_pushable_pawns);
-        move_list.push(DBL | idx_shift::<SIDE, 16>(idx) | idx << 6);
+        push_move!(moves, DBL | idx_shift::<SIDE, 16>(idx) | idx << 6);
     }
 }
 
 
 #[inline(always)]
-unsafe fn castles(move_list: &mut MoveList, occ: u64) {
+unsafe fn castles(moves: &mut MoveList, occ: u64) {
     let r: u8 = POS.state.rights;
     match POS.mover {
         WHITE => {
             if r & WQS > 0 && occ & B1C1D1 == 0 && !is_sq_att(3, WHITE, occ) {
-                move_list.push(QS | 2 | 4 << 6)
+                push_move!(moves, QS | 2 | 4 << 6);
             }
             if r & WKS > 0 && occ & F1G1 == 0 && !is_sq_att(5, WHITE, occ) {
-                move_list.push(KS| 6 | 4 << 6)
+                push_move!(moves, KS| 6 | 4 << 6);
             }
         }
         BLACK => {
             if r & BQS > 0 && occ & B8C8D8 == 0 && !is_sq_att(59, BLACK, occ) {
-                move_list.push(QS | 58 | 60 << 6)
+                push_move!(moves, QS | 58 | 60 << 6);
             }
             if r & BKS > 0 && occ & F8G8 == 0 && !is_sq_att(61, BLACK, occ) {
-                move_list.push(KS | 62 | 60 << 6)
+                push_move!(moves, KS | 62 | 60 << 6);
             }
         }
         _ => unreachable_unchecked(),
