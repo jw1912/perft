@@ -31,11 +31,3 @@ impl Default for MoveList {
         Self {list: unsafe {#[allow(clippy::uninit_assumed_init)] std::mem::MaybeUninit::uninit().assume_init()}, len: 0} 
     }
 }
-
-#[derive(Clone, Copy)]
-pub struct Mask {
-    pub bitmask: u64,
-    pub diag: u64,
-    pub antidiag: u64,
-    pub file: u64,
-}
