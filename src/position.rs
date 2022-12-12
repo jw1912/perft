@@ -2,6 +2,9 @@ use super::*;
 use std::hint::unreachable_unchecked;
 
 macro_rules! msb {($x:expr, $t:ty) => {63 ^ $x.leading_zeros() as $t}}
+macro_rules! from {($m:expr) => {(($m >> 6) & 63) as usize}}
+macro_rules! to {($m:expr) => {($m & 63) as usize}}
+macro_rules! bit {($x:expr) => {1 << $x}}
 
 pub fn batt(idx: usize, occ: u64) -> u64 {
     let mut ne: u64 = NE[idx];
@@ -69,26 +72,19 @@ unsafe fn get_pc(bit: u64) -> usize {
 
 pub fn do_move(m: u16) -> bool {
     unsafe {
-    let opp: usize = POS.mover ^ 1;
-
-    // move data
     let (from, to): (usize, usize) = (from!(m), to!(m));
     let (f, t): (u64, u64) = (bit!(from), bit!(to));
     let (mpc, cpc): (usize, usize) = (get_pc(f), get_pc(t));
     let flag: u16 = m & 0xF000;
+    let opp: usize = POS.mover ^ 1;
 
-    // initial updates
     STACK[STACK_IDX] = MoveState { state: POS.state, m, mpc: mpc as u8, cpc: cpc as u8};
     STACK_IDX += 1;
     let mov: u64 = f | t;
     toggle!(POS.mover, mpc, mov);
     POS.state.enp = 0;
-
-    // captures
     if cpc != EMPTY { toggle!(opp, cpc, t); }
     if cpc == ROOK { POS.state.rights &= CASTLE_RIGHTS[to]; }
-
-    // piece-specific updates
     match mpc {
         PAWN => {
             if flag == ENP {
@@ -112,12 +108,9 @@ pub fn do_move(m: u16) -> bool {
         ROOK => POS.state.rights &= CASTLE_RIGHTS[from],
         _ => {}
     }
-
-    // final updates
     POS.state.halfm = (mpc > PAWN && flag != CAP) as u8 * (POS.state.halfm + 1);
     POS.mover ^= 1;
 
-    // is legal?
     let king_idx: usize = lsb!(POS.piece[KING] & POS.side[opp ^ 1], usize);
     let invalid: bool = is_sq_att(king_idx, opp ^ 1, POS.side[0] | POS.side[1]);
     if invalid { undo_move() }
@@ -127,27 +120,18 @@ pub fn do_move(m: u16) -> bool {
 
 pub fn undo_move() {
     unsafe {
-    let opp: usize = POS.mover;
-    POS.mover ^= 1;
-
-    // restore state
     STACK_IDX -= 1;
     let state: MoveState = STACK[STACK_IDX];
-
-    // move data
     let (mpc, cpc): (usize, usize) = (state.mpc as usize, state.cpc as usize);
     let (from, to): (usize, usize) = (from!(state.m), to!(state.m));
     let (f, t): (u64, u64) = (bit!(from), bit!(to));
     let flag: u16 = state.m & 0xF000;
+    let opp: usize = POS.mover;
 
-    // initial updates
+    POS.mover ^= 1;
     POS.state = state.state;
     toggle!(POS.mover, mpc, f | t);
-
-    // captures
     if cpc != EMPTY { toggle!(opp, cpc, t); }
-
-    // piece-specific updates
     match mpc as usize {
         PAWN =>  {
             if flag == ENP {
@@ -166,6 +150,5 @@ pub fn undo_move() {
             }
         }
         _ => {}
-    }
-    }
+    }}
 }

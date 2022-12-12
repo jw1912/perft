@@ -5,7 +5,7 @@ mod movegen;
 
 pub use typedefs::*;
 pub use consts::*;
-use movegen::gen_moves;
+use movegen::gen;
 use position::{do_move, undo_move};
 use std::time::Instant;
 
@@ -24,16 +24,7 @@ macro_rules! toggle {
     };
 }
 
-#[macro_export]
-macro_rules! bit {($x:expr) => {1 << $x}}
-
 macro_rules! parse {($type: ty, $s: expr, $else: expr) => {$s.parse::<$type>().unwrap_or($else)}}
-
-#[macro_export]
-macro_rules! from {($m:expr) => {(($m >> 6) & 63) as usize}}
-
-#[macro_export]
-macro_rules! to {($m:expr) => {($m & 63) as usize}}
 
 const POSITION: [&str; 6] = [
     STARTPOS, 
@@ -58,16 +49,16 @@ fn main() {
     println!("Hello, world!");
     for (i, fen) in POSITION.iter().enumerate() {
         parse_fen(fen);
-        println!("Position: {fen}");
-        let exp = EXPECTED[i];
+        println!("\nPosition: {fen}");
+        let exp: &[u64] = EXPECTED[i];
         for (d, &exp_count) in exp.iter().enumerate() {
-            let now = Instant::now();
+            let now: Instant = Instant::now();
             let count: u64 = perft(d as u8);
             assert_eq!(count, exp_count);
-            let time = now.elapsed();
-            println!("info depth {} time {} nodes {count} Mnps {:.2}", d, time.as_millis(), count as f64 / time.as_micros() as f64);
+            println!("info depth {} time {} nodes {count} Mnps {:.2}", 
+                d, now.elapsed().as_millis(), count as f64 / now.elapsed().as_micros() as f64
+            );
         }
-        println!(" ");
     }
     }
 }
@@ -75,7 +66,7 @@ fn main() {
 fn perft(depth_left: u8) -> u64 {
     if depth_left == 0 { return 1 }
     let mut moves = MoveList::default();
-    gen_moves(&mut moves);
+    gen(&mut moves);
     let mut positions: u64 = 0;
     for m_idx in 0..moves.len {
         let m: u16 = moves.list[m_idx];
@@ -104,7 +95,7 @@ unsafe fn parse_fen(fen: &str) {
         else if ('1'..='8').contains(&ch) { col += parse!(i16, ch.to_string(), 0) }
         else {
             let idx: usize = ['P','N','B','R','Q','K','p','n','b','r','q','k'].iter().position(|&element| element == ch).unwrap_or(6);
-            toggle!((idx > 5) as usize, idx - 6 * ((idx > 5) as usize), bit!(8 * row + col));
+            toggle!((idx > 5) as usize, idx - 6 * ((idx > 5) as usize), 1 << (8 * row + col));
             col += 1;
         }
     }

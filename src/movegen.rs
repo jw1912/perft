@@ -14,7 +14,7 @@ fn encode_moves(move_list: &mut MoveList, mut attacks: u64, from: u16, flag: u16
     }
 }
 
-pub fn gen_moves(moves: &mut MoveList) {
+pub fn gen(moves: &mut MoveList) {
     unsafe {
     let occ: u64 = POS.side[0] | POS.side[1];
     let friends: u64 = POS.side[POS.mover];
@@ -137,21 +137,22 @@ fn pawn_pushes<const SIDE: usize>(move_list: &mut MoveList, occupied: u64, pawns
 
 
 #[inline(always)]
-unsafe fn castles(move_list: &mut MoveList, occupied: u64) {
+unsafe fn castles(move_list: &mut MoveList, occ: u64) {
+    let r: u8 = POS.state.rights;
     match POS.mover {
         WHITE => {
-            if POS.state.rights & WQS > 0 && occupied & (B1C1D1) == 0 && !is_sq_att(3, WHITE, occupied) {
+            if r & WQS > 0 && occ & B1C1D1 == 0 && !is_sq_att(3, WHITE, occ) {
                 move_list.push(QS | 2 | 4 << 6)
             }
-            if POS.state.rights & WKS > 0 && occupied & (F1G1) == 0 && !is_sq_att(5, WHITE, occupied) {
+            if r & WKS > 0 && occ & F1G1 == 0 && !is_sq_att(5, WHITE, occ) {
                 move_list.push(KS| 6 | 4 << 6)
             }
         }
         BLACK => {
-            if POS.state.rights & BQS > 0 && occupied & (B8C8D8) == 0 && !is_sq_att(59, BLACK, occupied) {
+            if r & BQS > 0 && occ & B8C8D8 == 0 && !is_sq_att(59, BLACK, occ) {
                 move_list.push(QS | 58 | 60 << 6)
             }
-            if POS.state.rights & BKS > 0 && occupied & (F8G8) == 0 && !is_sq_att(61, BLACK, occupied) {
+            if r & BKS > 0 && occ & F8G8 == 0 && !is_sq_att(61, BLACK, occ) {
                 move_list.push(KS | 62 | 60 << 6)
             }
         }
