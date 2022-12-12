@@ -1,4 +1,4 @@
-use super::{*, position::{is_in_check, is_square_attacked, rook_attacks, bishop_attacks}};
+use super::{*, position::{in_check, is_sq_att, ratt, batt}};
 use std::hint::unreachable_unchecked;
 
 
@@ -14,71 +14,69 @@ fn encode_moves(move_list: &mut MoveList, mut attacks: u64, from: u16, flag: u16
     }
 }
 
-pub fn gen_moves(move_list: &mut MoveList) {
+pub fn gen_moves(moves: &mut MoveList) {
     unsafe {
-    let occupied: u64 = POS.side[0] | POS.side[1];
-    let friendly: u64 = POS.side[POS.mover];
-    let pawns: u64 = POS.piece[PAWN] & POS.side[POS.mover];
+    let occ: u64 = POS.side[0] | POS.side[1];
+    let friends: u64 = POS.side[POS.mover];
+    let pawns: u64 = POS.piece[PAWN] & friends;
     match POS.mover {
-        0 => pawn_pushes::<WHITE>(move_list, occupied, pawns),
-        1 => pawn_pushes::<BLACK>(move_list, occupied, pawns),
+        0 => pawn_pushes::<WHITE>(moves, occ, pawns),
+        1 => pawn_pushes::<BLACK>(moves, occ, pawns),
         _ => unreachable_unchecked(),
     }
-    if POS.state.rights & SIDES[POS.mover] > 0 && !is_in_check() {castles(move_list, occupied)}
-    pawn_captures(move_list, pawns, POS.side[POS.mover ^ 1]);
-    if POS.state.enp > 0 {en_passants(move_list, pawns, POS.state.enp)}
-    piece_moves::<KNIGHT>(move_list, occupied, friendly);
-    piece_moves::<BISHOP>(move_list, occupied, friendly);
-    piece_moves::<ROOK  >(move_list, occupied, friendly);
-    piece_moves::<QUEEN >(move_list, occupied, friendly);
-    piece_moves::<KING  >(move_list, occupied, friendly);
+    if POS.state.rights & SIDES[POS.mover] > 0 && !in_check() {castles(moves, occ)}
+    pawn_captures(moves, pawns, POS.side[POS.mover ^ 1]);
+    if POS.state.enp > 0 {en_passants(moves, pawns, POS.state.enp)}
+    piece_moves::<KNIGHT>(moves, occ, friends);
+    piece_moves::<BISHOP>(moves, occ, friends);
+    piece_moves::<ROOK  >(moves, occ, friends);
+    piece_moves::<QUEEN >(moves, occ, friends);
+    piece_moves::<KING  >(moves, occ, friends);
     }
 }
 
-unsafe fn piece_moves<const PIECE: usize>(move_list: &mut MoveList, occupied: u64, friendly: u64) {
+unsafe fn piece_moves<const PIECE: usize>(move_list: &mut MoveList, occ: u64, friends: u64) {
     let mut from: u16;
     let mut idx: usize;
     let mut attacks: u64;
-    let mut attackers: u64 = POS.piece[PIECE] & friendly;
+    let mut attackers: u64 = POS.piece[PIECE] & friends;
     while attackers > 0 {
         pop_lsb!(from, attackers);
         idx = from as usize;
         attacks = match PIECE {
             KNIGHT => NATT[idx],
-            ROOK => rook_attacks(idx, occupied),
-            BISHOP => bishop_attacks(idx, occupied),
-            QUEEN => rook_attacks(idx, occupied) | bishop_attacks(idx, occupied),
+            ROOK => ratt(idx, occ),
+            BISHOP => batt(idx, occ),
+            QUEEN => ratt(idx, occ) | batt(idx, occ),
             KING => KATT[idx],
             _ => panic!("Not a valid usize in fn piece_moves_general: {}", PIECE),
         };
         encode_moves(move_list, attacks & POS.side[POS.mover ^ 1], from, CAP);
-        encode_moves(move_list, attacks & !occupied, from, QUIET)
+        encode_moves(move_list, attacks & !occ, from, QUIET)
     }
 }
 
 #[inline(always)]
-unsafe fn pawn_captures(move_list: &mut MoveList, mut attackers: u64, opponents: u64) {
-    let mut from: u16;
+unsafe fn pawn_captures(move_list: &mut MoveList, mut attackers: u64, opps: u64) {
+    let (mut from, mut cidx, mut f): (u16, u16, u16);
     let mut attacks: u64;
-    let mut cidx: u16;
-    let mut f: u16;
     let mut promo_attackers: u64 = attackers & PENRANK[POS.mover];
     attackers &= !PENRANK[POS.mover];
     while attackers > 0 {
         pop_lsb!(from, attackers);
-        attacks = PATT[POS.mover][from as usize] & opponents;
+        attacks = PATT[POS.mover][from as usize] & opps;
         encode_moves(move_list, attacks, from, CAP);
     }
     while promo_attackers > 0 {
         pop_lsb!(from, promo_attackers);
-        attacks = PATT[POS.mover][from as usize] & opponents;
+        attacks = PATT[POS.mover][from as usize] & opps;
         while attacks > 0 {
             pop_lsb!(cidx, attacks);
             f = from << 6;
-            move_list.push(QPROMO_CAP  | cidx | f);
-            move_list.push(PROMO_CAP | cidx | f);
+            move_list.push(QPROMO_CAP | cidx | f);
+            move_list.push(PROMO_CAP  | cidx | f);
             move_list.push(BPROMO_CAP | cidx | f);
-            move_list.push(RPROMO_CAP   | cidx | f);
+            move_list.push(RPROMO_CAP | cidx | f);
         }
     }
 }
@@ -126,10 +124,10 @@ fn pawn_pushes<const SIDE: usize>(move_list: &mut MoveList, occupied: u64, pawns
         pop_lsb!(idx, promotable_pawns);
         let to: u16 = idx_shift::<SIDE, 8>(idx);
         let f: u16 = idx << 6;
-        move_list.push(QPROMO  | to | f);
-        move_list.push(PROMO | to | f);
+        move_list.push(QPROMO | to | f);
+        move_list.push(PROMO  | to | f);
         move_list.push(BPROMO | to | f);
-        move_list.push(RPROMO   | to | f);
+        move_list.push(RPROMO | to | f);
     }
     while dbl_pushable_pawns > 0 {
         pop_lsb!(idx, dbl_pushable_pawns);
@@ -142,22 +140,18 @@ fn pawn_pushes<const SIDE: usize>(move_list: &mut MoveList, occupied: u64, pawns
 unsafe fn castles(move_list: &mut MoveList, occupied: u64) {
     match POS.mover {
         WHITE => {
-            if POS.state.rights & WQS > 0 && occupied & (B1C1D1) == 0
-                && !is_square_attacked(3, WHITE, occupied) {
+            if POS.state.rights & WQS > 0 && occupied & (B1C1D1) == 0 && !is_sq_att(3, WHITE, occupied) {
                 move_list.push(QS | 2 | 4 << 6)
             }
-            if POS.state.rights & WKS > 0 && occupied & (F1G1) == 0
-                && !is_square_attacked(5, WHITE, occupied) {
+            if POS.state.rights & WKS > 0 && occupied & (F1G1) == 0 && !is_sq_att(5, WHITE, occupied) {
                 move_list.push(KS| 6 | 4 << 6)
             }
         }
         BLACK => {
-            if POS.state.rights & BQS > 0 && occupied & (B8C8D8) == 0
-                && !is_square_attacked(59, BLACK, occupied) {
+            if POS.state.rights & BQS > 0 && occupied & (B8C8D8) == 0 && !is_sq_att(59, BLACK, occupied) {
                 move_list.push(QS | 58 | 60 << 6)
             }
-            if POS.state.rights & BKS > 0 && occupied & (F8G8) == 0
-                && !is_square_attacked(61, BLACK, occupied) {
+            if POS.state.rights & BKS > 0 && occupied & (F8G8) == 0 && !is_sq_att(61, BLACK, occupied) {
                 move_list.push(KS | 62 | 60 << 6)
             }
         }

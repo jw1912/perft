@@ -3,7 +3,7 @@ use std::hint::unreachable_unchecked;
 
 macro_rules! msb {($x:expr, $t:ty) => {63 ^ $x.leading_zeros() as $t}}
 
-pub fn bishop_attacks(idx: usize, occ: u64) -> u64 {
+pub fn batt(idx: usize, occ: u64) -> u64 {
     let mut ne: u64 = NE[idx];
     let mut sq: usize = lsb!((ne & occ) | MSB, usize);
     ne ^= NE[sq];
@@ -19,7 +19,7 @@ pub fn bishop_attacks(idx: usize, occ: u64) -> u64 {
     ne | nw | se | sw
 }
 
-pub fn rook_attacks(idx: usize, occ: u64) -> u64 {
+pub fn ratt(idx: usize, occ: u64) -> u64 {
     let mut n: u64 = N[idx];
     let mut sq: usize = lsb!((n & occ) | MSB, usize);
     n ^= N[sq];
@@ -36,7 +36,7 @@ pub fn rook_attacks(idx: usize, occ: u64) -> u64 {
 }
 
 #[inline(always)]
-pub fn is_square_attacked(idx: usize, side: usize, occ: u64) -> bool {
+pub fn is_sq_att(idx: usize, side: usize, occ: u64) -> bool {
     unsafe {
     let other: usize = side ^ 1;
     let s: u64 = POS.side[other];
@@ -44,21 +44,21 @@ pub fn is_square_attacked(idx: usize, side: usize, occ: u64) -> bool {
     (NATT[idx] & POS.piece[KNIGHT] & s > 0)
     || (KATT[idx] & POS.piece[KING] & s > 0)
     || (PATT[side][idx] & POS.piece[PAWN] & s > 0)
-    || (rook_attacks(idx, occ) & (POS.piece[ROOK] & s | opp_queen) > 0)
-    || (bishop_attacks(idx, occ) & (POS.piece[BISHOP] & s | opp_queen) > 0)
+    || (ratt(idx, occ) & (POS.piece[ROOK] & s | opp_queen) > 0)
+    || (batt(idx, occ) & (POS.piece[BISHOP] & s | opp_queen) > 0)
     }
 }
 
 #[inline(always)]
-pub fn is_in_check() -> bool {
+pub fn in_check() -> bool {
     unsafe {
     let king_idx: usize = lsb!(POS.piece[KING] & POS.side[POS.mover], usize);
-    is_square_attacked(king_idx, POS.mover, POS.side[0] | POS.side[1])
+    is_sq_att(king_idx, POS.mover, POS.side[0] | POS.side[1])
     }
 }
 
 #[inline(always)]
-unsafe fn get_piece(bit: u64) -> usize {
+unsafe fn get_pc(bit: u64) -> usize {
     (POS.piece[KNIGHT] & bit > 0) as usize
     + BISHOP * (POS.piece[BISHOP] & bit > 0) as usize
     + ROOK * (POS.piece[ROOK] & bit > 0) as usize
@@ -74,7 +74,7 @@ pub fn do_move(m: u16) -> bool {
     // move data
     let (from, to): (usize, usize) = (from!(m), to!(m));
     let (f, t): (u64, u64) = (bit!(from), bit!(to));
-    let (mpc, cpc): (usize, usize) = (get_piece(f), get_piece(t));
+    let (mpc, cpc): (usize, usize) = (get_pc(f), get_pc(t));
     let flag: u16 = m & 0xF000;
 
     // initial updates
@@ -119,7 +119,7 @@ pub fn do_move(m: u16) -> bool {
 
     // is legal?
     let king_idx: usize = lsb!(POS.piece[KING] & POS.side[opp ^ 1], usize);
-    let invalid: bool = is_square_attacked(king_idx, opp ^ 1, POS.side[0] | POS.side[1]);
+    let invalid: bool = is_sq_att(king_idx, opp ^ 1, POS.side[0] | POS.side[1]);
     if invalid { undo_move() }
     invalid
     }
