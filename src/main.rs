@@ -9,8 +9,8 @@ use movegen::gen;
 use position::{do_move, undo_move};
 use std::time::Instant;
 
-static mut POS: Position = Position { piece: [0; 6], side: [0; 2], mover: 0, state: State { enp: 0, halfm: 0, rights: 0 } };
-static mut STACK: [MoveState; 128] = [MoveState {state: State { enp: 0, halfm: 0, rights: 0 }, m: 0, mpc: 0, cpc: 0} ; 128];
+static mut POS: Pos = Pos { pc: [0; 6], s: [0; 2], c: 0, state: State { enp: 0, hfm: 0, cr: 0 } };
+static mut STACK: [MoveState; 128] = [MoveState {state: State { enp: 0, hfm: 0, cr: 0 }, m: 0, mpc: 0, cpc: 0} ; 128];
 static mut STACK_IDX: usize = 0;
 
 #[macro_export]
@@ -19,8 +19,8 @@ macro_rules! lsb {($x:expr, $t:ty) => {$x.trailing_zeros() as $t}}
 #[macro_export]
 macro_rules! toggle {
     ($side:expr, $pc:expr, $bit:expr) => {
-        POS.piece[$pc] ^= $bit;
-        POS.side[$side] ^= $bit;
+        POS.pc[$pc] ^= $bit;
+        POS.s[$side] ^= $bit;
     };
 }
 
@@ -85,7 +85,7 @@ fn sq_to_idx(sq: &str) -> u16 {
 }
 
 unsafe fn parse_fen(fen: &str) {
-    POS = Position::default();
+    POS = Pos::default();
     STACK_IDX = 0;
     let vec: Vec<&str> = fen.split_whitespace().collect();
     let p: Vec<char> = vec[0].chars().collect();
@@ -99,10 +99,10 @@ unsafe fn parse_fen(fen: &str) {
             col += 1;
         }
     }
-    POS.mover = (vec[1] == "b") as usize;
-    let mut rights: u8 = 0;
-    for ch in vec[2].chars() {rights |= match ch {'Q' => WQS, 'K' => WKS, 'q' => BQS, 'k' => BKS, _ => 0}}
+    POS.c = (vec[1] == "b") as usize;
+    let mut cr: u8 = 0;
+    for ch in vec[2].chars() {cr |= match ch {'Q' => WQS, 'K' => WKS, 'q' => BQS, 'k' => BKS, _ => 0}}
     let enp: u16 = if vec[3] == "-" {0} else {sq_to_idx(vec[3])};
-    let halfm: u8 = parse!(u8, vec.get(4).unwrap_or(&"0"), 0);
-    POS.state = State {enp, halfm, rights};
+    let hfm: u8 = parse!(u8, vec.get(4).unwrap_or(&"0"), 0);
+    POS.state = State {enp, hfm, cr};
 }

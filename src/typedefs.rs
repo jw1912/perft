@@ -1,16 +1,16 @@
 #[derive(Default)]
-pub struct Position {
-    pub piece: [u64; 6],
-    pub side: [u64; 2],
-    pub mover: usize,
+pub struct Pos {
+    pub pc: [u64; 6],
+    pub s: [u64; 2],
+    pub c: usize,
     pub state: State,
 }
 
 #[derive(Copy, Clone, Default)]
 pub struct State {
     pub enp: u16,
-    pub halfm: u8,
-    pub rights: u8,
+    pub hfm: u8,
+    pub cr: u8,
 }
 
 #[derive(Copy, Clone)]
