@@ -1,4 +1,4 @@
-use super::{*, position::{in_check, is_sq_att, ratt, batt}};
+use super::{*, position::{is_sq_att, ratt, batt}};
 
 macro_rules! pop_lsb {($idx:expr, $x:expr) => {$idx = $x.trailing_zeros() as u16; $x &= $x - 1}}
 macro_rules! push_move {($l:expr, $m:expr) => {$l.list[$l.len] = $m; $l.len += 1;}}
@@ -19,7 +19,7 @@ pub fn gen(moves: &mut MoveList) {
     let friends: u64 = POS.s[POS.c];
     let pawns: u64 = POS.pc[P] & friends;
     if POS.c == WH {pawn_pushes::<WH>(moves, occ, pawns)} else {pawn_pushes::<BL>(moves, occ, pawns)}
-    if POS.state.cr & SIDES[POS.c] > 0 && !in_check() {castles(moves, occ)}
+    if POS.state.cr & SIDES[POS.c] > 0 && !is_sq_att(4 + 56 * (POS.c == BL) as usize, POS.c, occ) {castles(moves, occ)}
     pawn_captures(moves, pawns, POS.s[POS.c ^ 1]);
     if POS.state.enp > 0 {en_passants(moves, pawns, POS.state.enp)}
     pc_moves::<N>(moves, occ, friends);

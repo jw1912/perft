@@ -56,14 +56,6 @@ pub fn is_sq_att(idx: usize, side: usize, occ: u64) -> bool {
     }
 }
 
-#[inline(always)]
-pub fn in_check() -> bool {
-    unsafe {
-    let king_idx: usize = lsb!(POS.pc[K] & POS.s[POS.c], usize);
-    is_sq_att(king_idx, POS.c, POS.s[0] | POS.s[1])
-    }
-}
-
 pub fn do_move(m: u16) -> bool {
     unsafe {
     let (from, to): (usize, usize) = (from!(m), to!(m));
