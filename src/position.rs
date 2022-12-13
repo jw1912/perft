@@ -66,10 +66,8 @@ impl Pos {
     }
 
     pub fn do_move(&mut self, m: Move) -> bool {
-        let from: usize = m.from as usize;
-        let to: usize = m.to as usize;
-        let f: u64 = bit!(from);
-        let t: u64 = bit!(to);
+        let f: u64 = bit!(m.from);
+        let t: u64 = bit!(m.to);
         let mpc: usize = m.mpc as usize;
         let cpc: usize = if m.flag & CAP == 0 || m.flag == ENP {E} else {self.get_pc(t)};
         let opp: usize = self.c ^ 1;
@@ -77,14 +75,14 @@ impl Pos {
         self.toggle(self.c, mpc, f | t);
         self.state.enp = 0;
         if cpc != E { self.toggle(opp, cpc, t); }
-        if cpc == R { self.state.cr &= CR[to]; }
+        if cpc == R { self.state.cr &= CR[m.to as usize]; }
         match mpc {
             P => {
                 if m.flag == ENP {
                     let p: u64 = if opp == WH {t << 8} else {t >> 8};
                     self.toggle(opp, P, p);
                 } else if m.flag == DBL {
-                    self.state.enp = if self.c == WH {to - 8} else {to + 8} as u8;
+                    self.state.enp = if opp == BL {m.to - 8} else {m.to + 8};
                 } else if m.flag >= PROMO {
                     let ppc: u8 = (m.flag & 3) + 1;
                     self.pc[mpc] ^= t;
@@ -92,19 +90,19 @@ impl Pos {
                 }
             }
             K => {
-                self.state.cr &= CR[from];
+                self.state.cr &= CR[m.from as usize];
                 if m.flag == KS || m.flag == QS {
                     let c: u64 = CASTLE_MOVES[self.c][(m.flag == KS) as usize];
                     self.toggle(self.c, R, c);
                 }
             }
-            R => self.state.cr &= CR[from],
+            R => self.state.cr &= CR[m.from as usize],
             _ => {}
         }
         self.state.hfm = if mpc > P && cpc != E {0} else {self.state.hfm + 1};
         self.c ^= 1;
-
-        let king_idx: usize = lsb!(self.pc[K] & self.s[opp ^ 1], usize);
-        self.is_sq_att(king_idx, opp ^ 1, self.s[0] | self.s[1])
+        
+        let king_idx: usize = lsb!(self.pc[K] & self.s[self.c ^ 1], usize);
+        self.is_sq_att(king_idx, self.c ^ 1, self.s[0] | self.s[1])
     }
 }
