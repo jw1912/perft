@@ -19,7 +19,6 @@ impl Pos {
         let friends: u64 = self.s[self.c];
         let pawns: u64 = self.pc[P] & friends;
         if self.c == WH {pawn_pushes::<WH>(moves, occ, pawns)} else {pawn_pushes::<BL>(moves, occ, pawns)}
-        if self.state.cr & SIDES[self.c] > 0 && !self.is_sq_att(4 + 56 * (self.c == BL) as usize, self.c, occ) {self.castles(moves, occ)}
         pawn_captures(moves, pawns, self.s[self.c ^ 1], self.c);
         if self.state.enp > 0 {en_passants(moves, pawns, self.state.enp, self.c)}
         pc_moves::<N>(moves, occ, friends, self.pc[N]);
@@ -27,6 +26,7 @@ impl Pos {
         pc_moves::<R>(moves, occ, friends, self.pc[R]);
         pc_moves::<Q>(moves, occ, friends, self.pc[Q]);
         pc_moves::<K>(moves, occ, friends, self.pc[K]);
+        if self.state.cr & SIDES[self.c] > 0 && !self.is_sq_att(4 + 56 * (self.c == BL) as usize, self.c, occ) {self.castles(moves, occ)}
     }
 
     fn castles(&self, moves: &mut MoveList, occ: u64) {

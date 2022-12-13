@@ -60,41 +60,44 @@ impl Pos {
         || (batt(idx, occ) & (self.pc[B] & s | opp_queen) > 0)
     }
 
+    #[inline(always)]
+    pub fn get_pc(&self, bit: u64) -> usize {
+        (self.pc[N] & bit > 0) as usize
+        + B * (self.pc[B] & bit > 0) as usize
+        + R * (self.pc[R] & bit > 0) as usize
+        + Q * (self.pc[Q] & bit > 0) as usize
+        + K * (self.pc[K] & bit > 0) as usize
+        + E * (!(self.s[0] | self.s[1]) & bit > 0) as usize
+    }
+
     pub fn do_move(&mut self, m: u16) -> bool {
         let (from, to): (usize, usize) = (from!(m), to!(m));
         let (f, t): (u64, u64) = (bit!(from), bit!(to));
-        let (mpc, cpc): (usize, usize) = (self.sq[from] as usize, self.sq[to] as usize);
+        let (mpc, cpc): (usize, usize) = (self.get_pc(f), self.get_pc(t));
         let flag: u16 = m & 0xF000;
         let opp: usize = self.c ^ 1;
 
-        let mov: u64 = f | t;
-        self.toggle(self.c, mpc, mov);
-        self.sq[from] = E as u8;
-        self.sq[to] = mpc as u8;
+        self.toggle(self.c, mpc, f | t);
         self.state.enp = 0;
         if cpc != E { self.toggle(opp, cpc, t); }
         if cpc == R { self.state.cr &= CR[to]; }
         match mpc {
             P => {
                 if flag == ENP {
-                    let p_idx: usize = if opp == WH {to + 8} else {to - 8};
-                    let p: u64 = bit!(p_idx);
+                    let p: u64 = if opp == WH {t << 8} else {t >> 8};
                     self.toggle(opp, P, p);
-                    self.sq[p_idx] = E as u8;
                 } else if flag == DBL {
                     self.state.enp = if self.c == WH {to - 8} else {to + 8} as u16;
                 } else if flag >= PROMO {
                     let ppc: u16 = ((flag >> 12) & 3) + 1;
                     self.pc[mpc] ^= t;
                     self.pc[ppc as usize] ^= t;
-                    self.sq[to] = ppc as u8;
                 }
             }
             K => {
                 self.state.cr &= CR[from];
                 if flag == KS || flag == QS {
-                    let (c, idx1, idx2): (u64, usize, usize) = CASTLE_MOVES[self.c][(flag == KS) as usize];
-                    self.sq.swap(idx1, idx2);
+                    let c: u64 = CASTLE_MOVES[self.c][(flag == KS) as usize];
                     self.toggle(self.c, R, c);
                 }
             }

@@ -69,7 +69,7 @@ fn sq_to_idx(sq: &str) -> u16 {
 }
 
 unsafe fn parse_fen(fen: &str) -> Pos {
-    let mut pos = Pos { pc: [0; 6], s: [0; 2], sq: [6; 64], c: 0, state: State { enp: 0, hfm: 0, cr: 0 } };
+    let mut pos = Pos { pc: [0; 6], s: [0; 2], c: 0, state: State { enp: 0, hfm: 0, cr: 0 } };
     let vec: Vec<&str> = fen.split_whitespace().collect();
     let p: Vec<char> = vec[0].chars().collect();
     let (mut row, mut col): (i16, i16) = (7, 0);
@@ -79,7 +79,6 @@ unsafe fn parse_fen(fen: &str) -> Pos {
         else {
             let idx: usize = ['P','N','B','R','Q','K','p','n','b','r','q','k'].iter().position(|&element| element == ch).unwrap_or(6);
             pos.toggle((idx > 5) as usize, idx - 6 * ((idx > 5) as usize), 1 << (8 * row + col));
-            pos.sq[(8 * row + col) as usize] = idx as u8 - 6 * ((idx > 5) as u8);
             col += 1;
         }
     }

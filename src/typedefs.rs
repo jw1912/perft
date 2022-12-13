@@ -2,7 +2,6 @@
 pub struct Pos {
     pub pc: [u64; 6],
     pub s: [u64; 2],
-    pub sq: [u8; 64],
     pub c: usize,
     pub state: State,
 }
