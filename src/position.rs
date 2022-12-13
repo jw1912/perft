@@ -60,21 +60,21 @@ pub fn in_check() -> bool {
     }
 }
 
-#[inline(always)]
-unsafe fn get_pc(bit: u64) -> usize {
-    (POS.pc[N] & bit > 0) as usize
-    + B * (POS.pc[B] & bit > 0) as usize
-    + R * (POS.pc[R] & bit > 0) as usize
-    + Q * (POS.pc[Q] & bit > 0) as usize
-    + K * (POS.pc[K] & bit > 0) as usize
-    + E * (!(POS.s[0] | POS.s[1]) & bit > 0) as usize
-} 
+//#[inline(always)]
+//unsafe fn get_pc(bit: u64) -> usize {
+//    (POS.pc[N] & bit > 0) as usize
+//    + B * (POS.pc[B] & bit > 0) as usize
+//    + R * (POS.pc[R] & bit > 0) as usize
+//    + Q * (POS.pc[Q] & bit > 0) as usize
+//    + K * (POS.pc[K] & bit > 0) as usize
+//    + E * (!(POS.s[0] | POS.s[1]) & bit > 0) as usize
+//} 
 
 pub fn do_move(m: u16) -> bool {
     unsafe {
     let (from, to): (usize, usize) = (from!(m), to!(m));
     let (f, t): (u64, u64) = (bit!(from), bit!(to));
-    let (mpc, cpc): (usize, usize) = (get_pc(f), get_pc(t));
+    let (mpc, cpc): (usize, usize) = (POS.sq[from] as usize, POS.sq[to] as usize);
     let flag: u16 = m & 0xF000;
     let opp: usize = POS.c ^ 1;
 
@@ -82,25 +82,32 @@ pub fn do_move(m: u16) -> bool {
     STACK_IDX += 1;
     let mov: u64 = f | t;
     toggle!(POS.c, mpc, mov);
+    POS.sq[from] = E as u8;
+    POS.sq[to] = mpc as u8;
     POS.state.enp = 0;
     if cpc != E { toggle!(opp, cpc, t); }
     if cpc == R { POS.state.cr &= CR[to]; }
     match mpc {
         P => {
             if flag == ENP {
-                let p: u64 = match opp { WH => t << 8, BL => t >> 8, _ => unreachable_unchecked() };
+                let p_idx: usize = if opp == WH {to + 8} else {to - 8};
+                let p: u64 = bit!(p_idx);
                 toggle!(opp, P, p);
+                POS.sq[p_idx] = E as u8;
             } else if flag == DBL {
                 POS.state.enp = match POS.c {WH => to - 8, BL => to + 8, _ => unreachable_unchecked()} as u16;
             } else if flag >= PROMO {
+                let ppc: u16 = ((flag >> 12) & 3) + 1;
                 POS.pc[mpc] ^= t;
-                POS.pc[(((flag >> 12) & 3) + 1) as usize] ^= t;
+                POS.pc[ppc as usize] ^= t;
+                POS.sq[to] = ppc as u8;
             }
         }
         K => {
             POS.state.cr &= CR[from];
             if flag == KS || flag == QS {
-                let c: u64 = CASTLE_MOVES[POS.c][(flag == KS) as usize];
+                let (c, idx1, idx2): (u64, usize, usize) = CASTLE_MOVES[POS.c][(flag == KS) as usize];
+                POS.sq.swap(idx1, idx2);
                 toggle!(POS.c, R, c);
             }
         }
@@ -131,12 +138,16 @@ pub fn undo_move() {
     POS.state = state.state;
     let mov: u64 = f | t;
     toggle!(POS.c, mpc, mov);
+    POS.sq[from] = mpc as u8;
+    POS.sq[to] = cpc as u8;
     if cpc != E { toggle!(opp, cpc, t); }
     match mpc as usize {
         P =>  {
             if flag == ENP {
-                let p: u64 = match opp { WH => t << 8, BL => t >> 8, _ => unreachable_unchecked() };
+                let p_idx: usize = if opp == WH {to + 8} else {to - 8};
+                let p: u64 = bit!(p_idx);
                 toggle!(opp, P, p);
+                POS.sq[p_idx] = P as u8;
             } else if flag >= PROMO {
                 POS.pc[mpc] ^= t;
                 POS.pc[(((flag >> 12) & 3) + 1) as usize] ^= t;
@@ -144,7 +155,8 @@ pub fn undo_move() {
         }
         K => {
             if flag == KS || flag == QS {
-                let c: u64 = CASTLE_MOVES[POS.c][(flag == KS) as usize];
+                let (c, idx1, idx2): (u64, usize, usize) = CASTLE_MOVES[POS.c][(flag == KS) as usize];
+                POS.sq.swap(idx1, idx2);
                 toggle!(POS.c, R, c);
             }
         }

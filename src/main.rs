@@ -9,7 +9,7 @@ use movegen::gen;
 use position::{do_move, undo_move};
 use std::time::Instant;
 
-static mut POS: Pos = Pos { pc: [0; 6], s: [0; 2], c: 0, state: State { enp: 0, hfm: 0, cr: 0 } };
+static mut POS: Pos = Pos { pc: [0; 6], s: [0; 2], sq: [6; 64], c: 0, state: State { enp: 0, hfm: 0, cr: 0 } };
 static mut STACK: [MoveState; 128] = [MoveState {state: State { enp: 0, hfm: 0, cr: 0 }, m: 0, mpc: 0, cpc: 0} ; 128];
 static mut STACK_IDX: usize = 0;
 
@@ -85,7 +85,7 @@ fn sq_to_idx(sq: &str) -> u16 {
 }
 
 unsafe fn parse_fen(fen: &str) {
-    POS = Pos::default();
+    POS = Pos { pc: [0; 6], s: [0; 2], sq: [6; 64], c: 0, state: State { enp: 0, hfm: 0, cr: 0 } };
     STACK_IDX = 0;
     let vec: Vec<&str> = fen.split_whitespace().collect();
     let p: Vec<char> = vec[0].chars().collect();
@@ -96,6 +96,7 @@ unsafe fn parse_fen(fen: &str) {
         else {
             let idx: usize = ['P','N','B','R','Q','K','p','n','b','r','q','k'].iter().position(|&element| element == ch).unwrap_or(6);
             toggle!((idx > 5) as usize, idx - 6 * ((idx > 5) as usize), 1 << (8 * row + col));
+            POS.sq[(8 * row + col) as usize] = idx as u8 - 6 * ((idx > 5) as u8);
             col += 1;
         }
     }
