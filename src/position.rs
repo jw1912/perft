@@ -6,6 +6,7 @@ macro_rules! from {($m:expr) => {(($m >> 6) & 63) as usize}}
 macro_rules! to {($m:expr) => {($m & 63) as usize}}
 macro_rules! bit {($x:expr) => {1 << $x}}
 
+#[inline(always)]
 pub fn batt(idx: usize, occ: u64) -> u64 {
     let m: Mask = MASKS[idx];
     let mut f: u64 = occ & m.diag;
@@ -23,6 +24,7 @@ pub fn batt(idx: usize, occ: u64) -> u64 {
     f | f2
 }
 
+#[inline(always)]
 pub fn ratt(idx: usize, occ: u64) -> u64 {
     let m: Mask = MASKS[idx];
     let mut f: u64 = occ & m.file;
@@ -37,7 +39,6 @@ pub fn ratt(idx: usize, occ: u64) -> u64 {
     let mut w: u64 = WE[idx];
     sq = msb!((w & occ)| LSB, usize);
     w ^= WE[sq];
-
     f | e | w
 }
 
