@@ -1,8 +1,6 @@
 use super::*;
 
 macro_rules! msb {($x:expr, $t:ty) => {63 ^ $x.leading_zeros() as $t}}
-macro_rules! from {($m:expr) => {(($m >> 6) & 63) as usize}}
-macro_rules! to {($m:expr) => {($m & 63) as usize}}
 macro_rules! bit {($x:expr) => {1 << $x}}
 
 #[inline(always)]
@@ -70,11 +68,10 @@ impl Pos {
         + E * (!(self.s[0] | self.s[1]) & bit > 0) as usize
     }
 
-    pub fn do_move(&mut self, m: u16) -> bool {
-        let (from, to): (usize, usize) = (from!(m), to!(m));
-        let (f, t): (u64, u64) = (bit!(from), bit!(to));
-        let (mpc, cpc): (usize, usize) = (self.get_pc(f), self.get_pc(t));
-        let flag: u16 = m & 0xF000;
+    pub fn do_move(&mut self, m: Move) -> bool {
+        let (from, to): (usize, usize) = (m.from as usize, m.to as usize);
+        let (f, t): (u64, u64) = (bit!(m.from), bit!(m.to));
+        let (mpc, cpc): (usize, usize) = (m.mpc as usize, self.get_pc(t));
         let opp: usize = self.c ^ 1;
 
         self.toggle(self.c, mpc, f | t);
@@ -83,28 +80,28 @@ impl Pos {
         if cpc == R { self.state.cr &= CR[to]; }
         match mpc {
             P => {
-                if flag == ENP {
+                if m.flag == ENP {
                     let p: u64 = if opp == WH {t << 8} else {t >> 8};
                     self.toggle(opp, P, p);
-                } else if flag == DBL {
-                    self.state.enp = if self.c == WH {to - 8} else {to + 8} as u16;
-                } else if flag >= PROMO {
-                    let ppc: u16 = ((flag >> 12) & 3) + 1;
+                } else if m.flag == DBL {
+                    self.state.enp = if self.c == WH {to - 8} else {to + 8} as u8;
+                } else if m.flag >= PROMO {
+                    let ppc: u8 = (m.flag & 3) + 1;
                     self.pc[mpc] ^= t;
                     self.pc[ppc as usize] ^= t;
                 }
             }
             K => {
                 self.state.cr &= CR[from];
-                if flag == KS || flag == QS {
-                    let c: u64 = CASTLE_MOVES[self.c][(flag == KS) as usize];
+                if m.flag == KS || m.flag == QS {
+                    let c: u64 = CASTLE_MOVES[self.c][(m.flag == KS) as usize];
                     self.toggle(self.c, R, c);
                 }
             }
             R => self.state.cr &= CR[from],
             _ => {}
         }
-        self.state.hfm = (mpc > P && flag != CAP) as u8 * (self.state.hfm + 1);
+        self.state.hfm = (mpc > P && cpc != E) as u8 * (self.state.hfm + 1);
         self.c ^= 1;
 
         let king_idx: usize = lsb!(self.pc[K] & self.s[opp ^ 1], usize);

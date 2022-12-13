@@ -55,7 +55,7 @@ unsafe fn perft(pos: &Pos, depth_left: u8) -> u64 {
     let mut positions: u64 = 0;
     for m_idx in 0..moves.len {
         tmp = *pos;
-        let m: u16 = moves.list[m_idx];
+        let m: Move = moves.list[m_idx];
         if tmp.do_move(m) { continue }
         let count: u64 = perft(&tmp, depth_left - 1);
         positions += count;
@@ -63,9 +63,9 @@ unsafe fn perft(pos: &Pos, depth_left: u8) -> u64 {
     positions
 }
 
-fn sq_to_idx(sq: &str) -> u16 {
+fn sq_to_idx(sq: &str) -> u8 {
     let chs: Vec<char> = sq.chars().collect();
-    8 * parse!(u16, chs[1].to_string(), 0) + chs[0] as u16 - 105
+    8 * parse!(u8, chs[1].to_string(), 0) + chs[0] as u8 - 105
 }
 
 unsafe fn parse_fen(fen: &str) -> Pos {
@@ -85,7 +85,7 @@ unsafe fn parse_fen(fen: &str) -> Pos {
     pos.c = (vec[1] == "b") as usize;
     let mut cr: u8 = 0;
     for ch in vec[2].chars() {cr |= match ch {'Q' => WQS, 'K' => WKS, 'q' => BQS, 'k' => BKS, _ => 0}}
-    let enp: u16 = if vec[3] == "-" {0} else {sq_to_idx(vec[3])};
+    let enp: u8 = if vec[3] == "-" {0} else {sq_to_idx(vec[3])};
     let hfm: u8 = parse!(u8, vec.get(4).unwrap_or(&"0"), 0);
     pos.state = State {enp, hfm, cr};
     pos

@@ -12,20 +12,20 @@ pub const WH: usize = 0;
 pub const BL: usize = 1;
 
 // move flags
-pub const QUIET: u16 = 0;
-pub const DBL: u16 = 4096;
-pub const KS: u16 = 8192;
-pub const QS: u16 = 12288;
-pub const CAP: u16 = 16384;
-pub const ENP: u16 = 20480;
-pub const PROMO: u16 = 32768;
-pub const BPROMO: u16 = 36864;
-pub const RPROMO: u16 = 40960;
-pub const QPROMO: u16 = 45056;
-pub const PROMO_CAP: u16 = 49152;
-pub const BPROMO_CAP: u16 = 53248;
-pub const RPROMO_CAP: u16 = 57344;
-pub const QPROMO_CAP: u16 = 61440;
+pub const QUIET: u8 = 0;
+pub const DBL: u8 = 1;
+pub const KS: u8 = 2;
+pub const QS: u8 = 3;
+pub const CAP: u8 = 4;
+pub const ENP: u8 = 5;
+pub const PROMO: u8 = 8;
+pub const BPROMO: u8 = 9;
+pub const RPROMO: u8 = 10;
+pub const QPROMO: u8 = 11;
+pub const PROMO_CAP: u8 = 12;
+pub const BPROMO_CAP: u8 = 13;
+pub const RPROMO_CAP: u8 = 14;
+pub const QPROMO_CAP: u8 = 15;
 
 // castling
 pub const WQS: u8 = 8;
