@@ -7,35 +7,38 @@ macro_rules! to {($m:expr) => {($m & 63) as usize}}
 macro_rules! bit {($x:expr) => {1 << $x}}
 
 pub fn batt(idx: usize, occ: u64) -> u64 {
-    let mut ne: u64 = NE[idx];
-    let mut sq: usize = lsb!((ne & occ) | MSB, usize);
-    ne ^= NE[sq];
-    let mut nw: u64 = NW[idx];
-    sq = lsb!((nw & occ) | MSB, usize);
-    nw ^= NW[sq];
-    let mut se: u64 = SE[idx];
-    sq = msb!((se & occ) | LSB, usize);
-    se ^= SE[sq];
-    let mut sw: u64 = SW[idx];
-    sq = msb!((sw & occ) | LSB, usize);
-    sw ^= SW[sq];
-    ne | nw | se | sw
+    let m: Mask = MASKS[idx];
+    let mut f: u64 = occ & m.diag;
+    let mut r: u64 = f.swap_bytes();
+    f -= m.bitmask;
+    r -= m.bitmask.swap_bytes();
+    f ^= r.swap_bytes();
+    f &= m.diag;
+    let mut f2: u64 = occ & m.antidiag;
+    r = f2.swap_bytes();
+    f2 -= m.bitmask;
+    r -= m.bitmask.swap_bytes();
+    f2 ^= r.swap_bytes();
+    f2 &= m.antidiag;
+    f | f2
 }
 
 pub fn ratt(idx: usize, occ: u64) -> u64 {
-    let mut n: u64 = NO[idx];
-    let mut sq: usize = lsb!((n & occ) | MSB, usize);
-    n ^= NO[sq];
+    let m: Mask = MASKS[idx];
+    let mut f: u64 = occ & m.file;
+    let mut r: u64 = f.swap_bytes();
+    f -= m.bitmask;
+    r -= m.bitmask.swap_bytes();
+    f ^= r.swap_bytes();
+    f &= m.file;
     let mut e: u64 = EA[idx];
-    sq = lsb!((e & occ )| MSB, usize);
+    let mut sq: usize = lsb!((e & occ) | MSB, usize);
     e ^= EA[sq];
-    let mut s: u64 = SO[idx];
-    sq = msb!((s & occ) | LSB, usize);
-    s ^= SO[sq];
     let mut w: u64 = WE[idx];
-    sq = msb!((w & occ) | LSB, usize);
+    sq = msb!((w & occ)| LSB, usize);
     w ^= WE[sq];
-    n | e | s | w
+
+    f | e | w
 }
 
 #[inline(always)]

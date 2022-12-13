@@ -1,3 +1,5 @@
+use super::Mask;
+
 // pcs / sides
 pub const P: usize = 0;
 pub const N: usize = 1;
@@ -61,3 +63,18 @@ pub static PATT: [[u64; 64];2] = [
 // fen strings
 pub const STARTPOS: &str = "rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1";
 pub const KIWIPETE: &str = "r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1";
+
+// hyperbola quintessence rook and bishop attacks
+pub static MASKS: [Mask; 64] = masks();
+const fn masks() -> [Mask; 64] {
+    let mut masks: [Mask; 64] = [Mask { bitmask: 0, diag: 0, antidiag: 0, file: 0} ; 64];
+    let mut idx: usize = 0;
+    while idx < 64 {
+        masks[idx].bitmask = 1 << idx;
+        masks[idx].diag = NE[idx] | SW[idx];
+        masks[idx].antidiag = NW[idx] | SE[idx];
+        masks[idx].file = NO[idx] | SO[idx];
+        idx += 1;
+    }
+    masks
+}
