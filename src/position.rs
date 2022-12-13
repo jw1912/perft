@@ -1,5 +1,6 @@
 use super::*;
 
+macro_rules! lsb {($x:expr, $t:ty) => {$x.trailing_zeros() as $t}}
 macro_rules! msb {($x:expr, $t:ty) => {63 ^ $x.leading_zeros() as $t}}
 macro_rules! bit {($x:expr) => {1 << $x}}
 
