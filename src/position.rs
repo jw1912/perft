@@ -60,16 +60,6 @@ pub fn in_check() -> bool {
     }
 }
 
-//#[inline(always)]
-//unsafe fn get_pc(bit: u64) -> usize {
-//    (POS.pc[N] & bit > 0) as usize
-//    + B * (POS.pc[B] & bit > 0) as usize
-//    + R * (POS.pc[R] & bit > 0) as usize
-//    + Q * (POS.pc[Q] & bit > 0) as usize
-//    + K * (POS.pc[K] & bit > 0) as usize
-//    + E * (!(POS.s[0] | POS.s[1]) & bit > 0) as usize
-//} 
-
 pub fn do_move(m: u16) -> bool {
     unsafe {
     let (from, to): (usize, usize) = (from!(m), to!(m));
