@@ -14,14 +14,6 @@ pub struct State {
     pub cr: u8,
 }
 
-#[derive(Copy, Clone)]
-pub struct MoveState {
-    pub state: State,
-    pub m: u16,
-    pub mpc: u8,
-    pub cpc: u8,
-}
-
 pub struct MoveList {
     pub list: [u16; 252],
     pub len: usize,
