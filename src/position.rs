@@ -5,7 +5,7 @@ macro_rules! bit {($x:expr) => {1 << $x}}
 
 #[inline(always)]
 pub fn batt(idx: usize, occ: u64) -> u64 {
-    let m: Mask = MASKS[idx];
+    let m: Mask = unsafe{*MASKS.get_unchecked(idx)};
     let mut f: u64 = occ & m.diag;
     let mut r: u64 = f.swap_bytes();
     f -= m.bitmask;
@@ -48,8 +48,7 @@ impl Pos {
 
     #[inline(always)]
     pub fn is_sq_att(&self, idx: usize, side: usize, occ: u64) -> bool {
-        let other: usize = side ^ 1;
-        let s: u64 = self.s[other];
+        let s: u64 = self.s[side ^ 1];
         let opp_queen: u64 = self.pc[Q] & s;
         (NATT[idx] & self.pc[N] & s > 0)
         || (KATT[idx] & self.pc[K] & s > 0)
@@ -60,18 +59,18 @@ impl Pos {
 
     #[inline(always)]
     pub fn get_pc(&self, bit: u64) -> usize {
-        (self.pc[N] & bit > 0) as usize
-        + B * (self.pc[B] & bit > 0) as usize
-        + R * (self.pc[R] & bit > 0) as usize
-        + Q * (self.pc[Q] & bit > 0) as usize
-        + K * (self.pc[K] & bit > 0) as usize
-        + E * (!(self.s[0] | self.s[1]) & bit > 0) as usize
+        ((self.pc[N] | self.pc[R] | self.pc[K]) & bit > 0) as usize
+        | (2 * ((self.pc[B] | self.pc[R]) & bit > 0) as usize)
+        | (4 * ((self.pc[Q] | self.pc[K]) & bit > 0) as usize)
     }
 
     pub fn do_move(&mut self, m: Move) -> bool {
-        let (from, to): (usize, usize) = (m.from as usize, m.to as usize);
-        let (f, t): (u64, u64) = (bit!(m.from), bit!(m.to));
-        let (mpc, cpc): (usize, usize) = (m.mpc as usize, self.get_pc(t));
+        let from: usize = m.from as usize;
+        let to: usize = m.to as usize;
+        let f: u64 = bit!(from);
+        let t: u64 = bit!(to);
+        let mpc: usize = m.mpc as usize;
+        let cpc: usize = if m.flag & CAP == 0 || m.flag == ENP {E} else {self.get_pc(t)};
         let opp: usize = self.c ^ 1;
 
         self.toggle(self.c, mpc, f | t);
@@ -101,7 +100,7 @@ impl Pos {
             R => self.state.cr &= CR[from],
             _ => {}
         }
-        self.state.hfm = (mpc > P && cpc != E) as u8 * (self.state.hfm + 1);
+        self.state.hfm = if mpc > P && cpc != E {0} else {self.state.hfm + 1};
         self.c ^= 1;
 
         let king_idx: usize = lsb!(self.pc[K] & self.s[opp ^ 1], usize);
