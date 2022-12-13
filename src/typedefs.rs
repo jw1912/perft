@@ -1,3 +1,4 @@
+#[derive(Copy, Clone)]
 pub struct Pos {
     pub pc: [u64; 6],
     pub s: [u64; 2],

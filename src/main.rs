@@ -5,23 +5,10 @@ mod movegen;
 
 pub use typedefs::*;
 pub use consts::*;
-use movegen::gen;
-use position::{do_move, undo_move};
 use std::time::Instant;
-
-static mut POS: Pos = Pos { pc: [0; 6], s: [0; 2], sq: [6; 64], c: 0, state: State { enp: 0, hfm: 0, cr: 0 } };
-static mut STACK: [MoveState; 128] = [MoveState {state: State { enp: 0, hfm: 0, cr: 0 }, m: 0, mpc: 0, cpc: 0} ; 128];
-static mut STACK_IDX: usize = 0;
 
 #[macro_export]
 macro_rules! lsb {($x:expr, $t:ty) => {$x.trailing_zeros() as $t}}
-#[macro_export]
-macro_rules! toggle {
-    ($side:expr, $pc:expr, $bit:expr) => {
-        POS.pc[$pc] ^= $bit;
-        POS.s[$side] ^= $bit;
-    };
-}
 macro_rules! parse {($type: ty, $s: expr, $else: expr) => {$s.parse::<$type>().unwrap_or($else)}}
 
 const POSITION: [&str; 6] = [
@@ -45,12 +32,12 @@ fn main() {
     unsafe {
     println!("Hello, world!");
     for (i, fen) in POSITION.iter().enumerate() {
-        parse_fen(fen);
+        let pos = parse_fen(fen);
         println!("\nPosition: {fen}");
         let exp: &[u64] = EXPECTED[i];
         for (d, &exp_count) in exp.iter().enumerate() {
             let now: Instant = Instant::now();
-            let count: u64 = perft(d as u8);
+            let count: u64 = perft(&pos, d as u8);
             assert_eq!(count, exp_count);
             println!("info depth {} time {} nodes {count} Mnps {:.2}", 
                 d, now.elapsed().as_millis(), count as f64 / now.elapsed().as_micros() as f64
@@ -60,17 +47,18 @@ fn main() {
     }
 }
 
-fn perft(depth_left: u8) -> u64 {
+unsafe fn perft(pos: &Pos, depth_left: u8) -> u64 {
     if depth_left == 0 { return 1 }
     let mut moves = MoveList::default();
-    gen(&mut moves);
+    pos.gen(&mut moves);
+    let mut tmp: Pos;
     let mut positions: u64 = 0;
     for m_idx in 0..moves.len {
+        tmp = *pos;
         let m: u16 = moves.list[m_idx];
-        if do_move(m) { continue }
-        let count: u64 = perft(depth_left - 1);
+        if tmp.do_move(m) { continue }
+        let count: u64 = perft(&tmp, depth_left - 1);
         positions += count;
-        undo_move();
     }
     positions
 }
@@ -80,9 +68,8 @@ fn sq_to_idx(sq: &str) -> u16 {
     8 * parse!(u16, chs[1].to_string(), 0) + chs[0] as u16 - 105
 }
 
-unsafe fn parse_fen(fen: &str) {
-    POS = Pos { pc: [0; 6], s: [0; 2], sq: [6; 64], c: 0, state: State { enp: 0, hfm: 0, cr: 0 } };
-    STACK_IDX = 0;
+unsafe fn parse_fen(fen: &str) -> Pos {
+    let mut pos = Pos { pc: [0; 6], s: [0; 2], sq: [6; 64], c: 0, state: State { enp: 0, hfm: 0, cr: 0 } };
     let vec: Vec<&str> = fen.split_whitespace().collect();
     let p: Vec<char> = vec[0].chars().collect();
     let (mut row, mut col): (i16, i16) = (7, 0);
@@ -91,15 +78,16 @@ unsafe fn parse_fen(fen: &str) {
         else if ('1'..='8').contains(&ch) { col += parse!(i16, ch.to_string(), 0) }
         else {
             let idx: usize = ['P','N','B','R','Q','K','p','n','b','r','q','k'].iter().position(|&element| element == ch).unwrap_or(6);
-            toggle!((idx > 5) as usize, idx - 6 * ((idx > 5) as usize), 1 << (8 * row + col));
-            POS.sq[(8 * row + col) as usize] = idx as u8 - 6 * ((idx > 5) as u8);
+            pos.toggle((idx > 5) as usize, idx - 6 * ((idx > 5) as usize), 1 << (8 * row + col));
+            pos.sq[(8 * row + col) as usize] = idx as u8 - 6 * ((idx > 5) as u8);
             col += 1;
         }
     }
-    POS.c = (vec[1] == "b") as usize;
+    pos.c = (vec[1] == "b") as usize;
     let mut cr: u8 = 0;
     for ch in vec[2].chars() {cr |= match ch {'Q' => WQS, 'K' => WKS, 'q' => BQS, 'k' => BKS, _ => 0}}
     let enp: u16 = if vec[3] == "-" {0} else {sq_to_idx(vec[3])};
     let hfm: u8 = parse!(u8, vec.get(4).unwrap_or(&"0"), 0);
-    POS.state = State {enp, hfm, cr};
+    pos.state = State {enp, hfm, cr};
+    pos
 }

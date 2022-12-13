@@ -1,4 +1,4 @@
-use super::{*, position::{is_sq_att, ratt, batt}};
+use super::{*, position::{ratt, batt}};
 
 macro_rules! pop_lsb {($idx:expr, $x:expr) => {$idx = $x.trailing_zeros() as u16; $x &= $x - 1}}
 macro_rules! push_move {($l:expr, $m:expr) => {$l.list[$l.len] = $m; $l.len += 1;}}
@@ -13,28 +13,47 @@ fn encode(moves: &mut MoveList, mut attacks: u64, from: u16) {
     }
 }
 
-pub fn gen(moves: &mut MoveList) {
-    unsafe {
-    let occ: u64 = POS.s[0] | POS.s[1];
-    let friends: u64 = POS.s[POS.c];
-    let pawns: u64 = POS.pc[P] & friends;
-    if POS.c == WH {pawn_pushes::<WH>(moves, occ, pawns)} else {pawn_pushes::<BL>(moves, occ, pawns)}
-    if POS.state.cr & SIDES[POS.c] > 0 && !is_sq_att(4 + 56 * (POS.c == BL) as usize, POS.c, occ) {castles(moves, occ)}
-    pawn_captures(moves, pawns, POS.s[POS.c ^ 1]);
-    if POS.state.enp > 0 {en_passants(moves, pawns, POS.state.enp)}
-    pc_moves::<N>(moves, occ, friends);
-    pc_moves::<B>(moves, occ, friends);
-    pc_moves::<R>(moves, occ, friends);
-    pc_moves::<Q>(moves, occ, friends);
-    pc_moves::<K>(moves, occ, friends);
+impl Pos {
+    pub fn gen(&self, moves: &mut MoveList) {
+        let occ: u64 = self.s[0] | self.s[1];
+        let friends: u64 = self.s[self.c];
+        let pawns: u64 = self.pc[P] & friends;
+        if self.c == WH {pawn_pushes::<WH>(moves, occ, pawns)} else {pawn_pushes::<BL>(moves, occ, pawns)}
+        if self.state.cr & SIDES[self.c] > 0 && !self.is_sq_att(4 + 56 * (self.c == BL) as usize, self.c, occ) {self.castles(moves, occ)}
+        pawn_captures(moves, pawns, self.s[self.c ^ 1], self.c);
+        if self.state.enp > 0 {en_passants(moves, pawns, self.state.enp, self.c)}
+        pc_moves::<N>(moves, occ, friends, self.pc[N]);
+        pc_moves::<B>(moves, occ, friends, self.pc[B]);
+        pc_moves::<R>(moves, occ, friends, self.pc[R]);
+        pc_moves::<Q>(moves, occ, friends, self.pc[Q]);
+        pc_moves::<K>(moves, occ, friends, self.pc[K]);
+    }
+
+    fn castles(&self, moves: &mut MoveList, occ: u64) {
+        let r = self.state.cr;
+        if self.c == WH {
+            if r & WQS > 0 && occ & B1C1D1 == 0 && !self.is_sq_att(3, WH, occ) {
+                push_move!(moves, QS | 2 | 4 << 6);
+            }
+            if r & WKS > 0 && occ & F1G1 == 0 && !self.is_sq_att(5, WH, occ) {
+                push_move!(moves, KS | 6 | 4 << 6);
+            }
+        } else {
+            if r & BQS > 0 && occ & B8C8D8 == 0 && !self.is_sq_att(59, BL, occ) {
+                push_move!(moves, QS | 58 | 60 << 6);
+            }
+            if r & BKS > 0 && occ & F8G8 == 0 && !self.is_sq_att(61, BL, occ) {
+                push_move!(moves, KS | 62 | 60 << 6);
+            }
+        }
     }
 }
 
-unsafe fn pc_moves<const PC: usize>(moves: &mut MoveList, occ: u64, friends: u64) {
+fn pc_moves<const PC: usize>(moves: &mut MoveList, occ: u64, friends: u64, mut attackers: u64) {
     let mut from: u16;
     let mut idx: usize;
     let mut attacks: u64;
-    let mut attackers: u64 = POS.pc[PC] & friends;
+    attackers &= friends;
     while attackers > 0 {
         pop_lsb!(from, attackers);
         idx = from as usize;
@@ -50,19 +69,19 @@ unsafe fn pc_moves<const PC: usize>(moves: &mut MoveList, occ: u64, friends: u64
     }
 }
 
-unsafe fn pawn_captures(moves: &mut MoveList, mut attackers: u64, opps: u64) {
+fn pawn_captures(moves: &mut MoveList, mut attackers: u64, opps: u64, c: usize) {
     let (mut from, mut cidx, mut f): (u16, u16, u16);
     let mut attacks: u64;
-    let mut promo_attackers: u64 = attackers & PENRANK[POS.c];
-    attackers &= !PENRANK[POS.c];
+    let mut promo_attackers: u64 = attackers & PENRANK[c];
+    attackers &= !PENRANK[c];
     while attackers > 0 {
         pop_lsb!(from, attackers);
-        attacks = PATT[POS.c][from as usize] & opps;
+        attacks = PATT[c][from as usize] & opps;
         encode(moves, attacks, from);
     }
     while promo_attackers > 0 {
         pop_lsb!(from, promo_attackers);
-        attacks = PATT[POS.c][from as usize] & opps;
+        attacks = PATT[c][from as usize] & opps;
         while attacks > 0 {
             pop_lsb!(cidx, attacks);
             f = from << 6;
@@ -74,8 +93,8 @@ unsafe fn pawn_captures(moves: &mut MoveList, mut attackers: u64, opps: u64) {
     }
 }
 
-unsafe fn en_passants(moves: &mut MoveList, pawns: u64, sq: u16) {
-    let mut attackers: u64 = PATT[POS.c ^ 1][sq as usize] & pawns;
+fn en_passants(moves: &mut MoveList, pawns: u64, sq: u16, c: usize) {
+    let mut attackers: u64 = PATT[c ^ 1][sq as usize] & pawns;
     let mut cidx: u16;
     while attackers > 0 {
         pop_lsb!(cidx, attackers);
@@ -116,24 +135,5 @@ fn pawn_pushes<const SIDE: usize>(moves: &mut MoveList, occupied: u64, pawns: u6
     while dbl_pushable_pawns > 0 {
         pop_lsb!(idx, dbl_pushable_pawns);
         push_move!(moves, DBL | idx_shift::<16>(idx, SIDE) | idx << 6);
-    }
-}
-
-unsafe fn castles(moves: &mut MoveList, occ: u64) {
-    let r: u8 = POS.state.cr;
-    if POS.c == WH {
-        if r & WQS > 0 && occ & B1C1D1 == 0 && !is_sq_att(3, WH, occ) {
-            push_move!(moves, QS | 2 | 4 << 6);
-        }
-        if r & WKS > 0 && occ & F1G1 == 0 && !is_sq_att(5, WH, occ) {
-            push_move!(moves, KS | 6 | 4 << 6);
-        }
-    } else {
-        if r & BQS > 0 && occ & B8C8D8 == 0 && !is_sq_att(59, BL, occ) {
-            push_move!(moves, QS | 58 | 60 << 6);
-        }
-        if r & BKS > 0 && occ & F8G8 == 0 && !is_sq_att(61, BL, occ) {
-            push_move!(moves, KS | 62 | 60 << 6);
-        }
     }
 }
