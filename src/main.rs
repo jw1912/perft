@@ -15,7 +15,6 @@ static mut STACK_IDX: usize = 0;
 
 #[macro_export]
 macro_rules! lsb {($x:expr, $t:ty) => {$x.trailing_zeros() as $t}}
-
 #[macro_export]
 macro_rules! toggle {
     ($side:expr, $pc:expr, $bit:expr) => {
@@ -23,7 +22,6 @@ macro_rules! toggle {
         POS.s[$side] ^= $bit;
     };
 }
-
 macro_rules! parse {($type: ty, $s: expr, $else: expr) => {$s.parse::<$type>().unwrap_or($else)}}
 
 const POSITION: [&str; 6] = [
@@ -34,7 +32,6 @@ const POSITION: [&str; 6] = [
     "rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8",
     "r4rk1/1pp1qppp/p1np1n2/2b1p1B1/2B1P1b1/P1NP1N2/1PP1QPPP/R4RK1 w - - 0 10",
 ];
-
 const EXPECTED: [&[u64]; 6] = [
     &[1, 20, 400, 8_902, 197_281, 4_865_609, 119_060_324],
     &[1, 48, 2_039, 97_862, 4_085_603, 193_690_690],
@@ -77,7 +74,6 @@ fn perft(depth_left: u8) -> u64 {
     }
     positions
 }
-
 
 fn sq_to_idx(sq: &str) -> u16 {
     let chs: Vec<char> = sq.chars().collect();

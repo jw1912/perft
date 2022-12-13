@@ -1,6 +1,5 @@
 use super::{*, position::{in_check, is_sq_att, ratt, batt}};
 
-
 macro_rules! pop_lsb {($idx:expr, $x:expr) => {$idx = $x.trailing_zeros() as u16; $x &= $x - 1}}
 macro_rules! push_move {($l:expr, $m:expr) => {$l.list[$l.len] = $m; $l.len += 1;}}
 
