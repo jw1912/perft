@@ -72,7 +72,7 @@ impl Pos {
         let opp: usize = self.c;
         self.toggle(side, mpc, f | t);
         self.state.enp = 0;
-        self.state.hfm = if mpc > P && cpc != E {0} else {self.state.hfm + 1};
+        self.state.hfm = if mpc == P || cpc != E {0} else {self.state.hfm + 1};
         if cpc != E { self.toggle(opp, cpc, t) }
         if cpc == R { self.state.cr &= CR[m.to as usize] }
         if mpc == R || mpc == K { self.state.cr &= CR[m.from as usize] }
