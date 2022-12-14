@@ -52,18 +52,16 @@ impl Pos {
 #[inline(always)]
 fn pc_moves<const PC: usize>(moves: &mut MoveList, occ: u64, friends: u64, opps: u64, mut attackers: u64) {
     let mut from: u8;
-    let mut idx: usize;
     let mut attacks: u64;
     attackers &= friends;
     while attackers > 0 {
         pop_lsb!(from, attackers);
-        idx = from as usize;
         attacks = match PC {
-            N => NATT[idx],
-            R => ratt(idx, occ),
-            B => batt(idx, occ),
-            Q => ratt(idx, occ) | batt(idx, occ),
-            K => KATT[idx],
+            N => NATT[from as usize],
+            R => ratt(from as usize, occ),
+            B => batt(from as usize, occ),
+            Q => ratt(from as usize, occ) | batt(from as usize, occ),
+            K => KATT[from as usize],
             _ => 0,
         };
         encode::<PC, CAP>(moves, attacks & opps, from);
