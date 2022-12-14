@@ -67,30 +67,27 @@ impl Pos {
         let t: u64 = 1 << m.to;
         let mpc: usize = m.mpc as usize;
         let cpc: usize = if m.flag & CAP == 0 || m.flag == ENP {E} else {self.get_pc(t)};
-        let opp: usize = self.c ^ 1;
-
-        self.toggle(self.c, mpc, f | t);
+        let side: usize = self.c;
+        self.c ^= 1;
+        let opp: usize = self.c;
+        self.toggle(side, mpc, f | t);
         self.state.enp = 0;
-        if cpc != E {
-            self.toggle(opp, cpc, t);
-            if cpc == R { self.state.cr &= CR[m.to as usize]; }
-        }
+        self.state.hfm = if mpc > P && cpc != E {0} else {self.state.hfm + 1};
+        if cpc != E { self.toggle(opp, cpc, t) }
+        if cpc == R { self.state.cr &= CR[m.to as usize] }
         if mpc == R || mpc == K { self.state.cr &= CR[m.from as usize] }
         match m.flag {
             ENP => self.toggle(opp, P, if opp == WH {t << 8} else {t >> 8}),
             DBL => self.state.enp = if opp == BL {m.to - 8} else {m.to + 8},
-            KS => self.toggle(self.c, R, CKM[self.c]),
-            QS => self.toggle(self.c, R, CQM[self.c]),
+            KS => self.toggle(side, R, CKM[side]),
+            QS => self.toggle(side, R, CQM[side]),
             PROMO.. => {
                 self.pc[mpc] ^= t;
                 self.pc[((m.flag & 3) + 1) as usize] ^= t;
             }
             _ => {}
         }
-        self.state.hfm = if mpc > P && cpc != E {0} else {self.state.hfm + 1};
-        self.c ^= 1;
-
-        let king_idx: usize = lsb!(self.pc[K] & self.s[self.c ^ 1], usize);
-        self.is_sq_att(king_idx, self.c ^ 1, self.s[0] | self.s[1])
+        let king_idx: usize = lsb!(self.pc[K] & self.s[side], usize);
+        self.is_sq_att(king_idx, side, self.s[0] | self.s[1])
     }
 }
