@@ -4,10 +4,10 @@ macro_rules! pop_lsb {($idx:expr, $x:expr) => {$idx = $x.trailing_zeros() as u8;
 
 #[inline(always)]
 fn encode<const PC: usize, const FLAG: u8>(moves: &mut MoveList, mut attacks: u64, from: u8) {
-    let mut aidx: u8;
+    let mut to: u8;
     while attacks > 0 {
-        pop_lsb!(aidx, attacks);
-        moves.push(from, aidx, FLAG, PC as u8);
+        pop_lsb!(to, attacks);
+        moves.push(from, to, FLAG, PC as u8);
     }
 }
 
@@ -71,7 +71,7 @@ fn pc_moves<const PC: usize>(moves: &mut MoveList, occ: u64, friends: u64, opps:
 }
 
 fn pawn_captures(moves: &mut MoveList, mut attackers: u64, opps: u64, c: usize) {
-    let (mut from, mut cidx): (u8, u8);
+    let (mut from, mut to): (u8, u8);
     let mut attacks: u64;
     let mut promo_attackers: u64 = attackers & PENRANK[c];
     attackers &= !PENRANK[c];
@@ -84,21 +84,21 @@ fn pawn_captures(moves: &mut MoveList, mut attackers: u64, opps: u64, c: usize) 
         pop_lsb!(from, promo_attackers);
         attacks = PATT[c][from as usize] & opps;
         while attacks > 0 {
-            pop_lsb!(cidx, attacks);
-            moves.push(from, cidx, QPROMO_CAP, P as u8);
-            moves.push(from, cidx, PROMO_CAP , P as u8);
-            moves.push(from, cidx, BPROMO_CAP, P as u8);
-            moves.push(from, cidx, RPROMO_CAP, P as u8);
+            pop_lsb!(to, attacks);
+            moves.push(from, to, QPROMO_CAP, P as u8);
+            moves.push(from, to, PROMO_CAP , P as u8);
+            moves.push(from, to, BPROMO_CAP, P as u8);
+            moves.push(from, to, RPROMO_CAP, P as u8);
         }
     }
 }
 
 fn en_passants(moves: &mut MoveList, pawns: u64, sq: u8, c: usize) {
     let mut attackers: u64 = PATT[c ^ 1][sq as usize] & pawns;
-    let mut cidx: u8;
+    let mut from: u8;
     while attackers > 0 {
-        pop_lsb!(cidx, attackers);
-        moves.push(cidx, sq, ENP, P as u8);
+        pop_lsb!(from, attackers);
+        moves.push(from, sq, ENP, P as u8);
     }
 }
 
@@ -118,21 +118,21 @@ fn pawn_pushes<const SIDE: usize>(moves: &mut MoveList, occupied: u64, pawns: u6
     let mut dbl_pushable_pawns: u64 = shift(shift(empty & DBLRANK[SIDE], SIDE) & empty, SIDE) & pawns;
     let mut promotable_pawns: u64 = pushable_pawns & PENRANK[SIDE];
     pushable_pawns &= !PENRANK[SIDE];
-    let mut idx: u8;
+    let mut from: u8;
     while pushable_pawns > 0 {
-        pop_lsb!(idx, pushable_pawns);
-        moves.push(idx, idx_shift::<8>(idx, SIDE), QUIET, P as u8);
+        pop_lsb!(from, pushable_pawns);
+        moves.push(from, idx_shift::<8>(from, SIDE), QUIET, P as u8);
     }
     while promotable_pawns > 0 {
-        pop_lsb!(idx, promotable_pawns);
-        let to: u8 = idx_shift::<8>(idx, SIDE);
-        moves.push(idx, to, QPROMO, P as u8);
-        moves.push(idx, to, PROMO , P as u8);
-        moves.push(idx, to, BPROMO, P as u8);
-        moves.push(idx, to, RPROMO, P as u8);
+        pop_lsb!(from, promotable_pawns);
+        let to: u8 = idx_shift::<8>(from, SIDE);
+        moves.push(from, to, QPROMO, P as u8);
+        moves.push(from, to, PROMO , P as u8);
+        moves.push(from, to, BPROMO, P as u8);
+        moves.push(from, to, RPROMO, P as u8);
     }
     while dbl_pushable_pawns > 0 {
-        pop_lsb!(idx, dbl_pushable_pawns);
-        moves.push(idx, idx_shift::<16>(idx, SIDE), DBL, P as u8);
+        pop_lsb!(from, dbl_pushable_pawns);
+        moves.push(from, idx_shift::<16>(from, SIDE), DBL, P as u8);
     }
 }
