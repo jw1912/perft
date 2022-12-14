@@ -12,7 +12,6 @@ fn encode<const PC: usize, const FLAG: u8>(moves: &mut MoveList, mut attacks: u6
 }
 
 impl Pos {
-    #[inline(always)]
     pub fn gen(&self, moves: &mut MoveList) {
         let occ: u64 = self.s[0] | self.s[1];
         let friends: u64 = self.s[self.c];
@@ -29,6 +28,7 @@ impl Pos {
         if self.state.cr & SIDES[self.c] > 0 && !self.is_sq_att(4 + 56 * (self.c == BL) as usize, self.c, occ) {self.castles(moves, occ)}
     }
 
+    #[inline(always)]
     fn castles(&self, moves: &mut MoveList, occ: u64) {
         let r = self.state.cr;
         if self.c == WH {
@@ -49,6 +49,7 @@ impl Pos {
     }
 }
 
+#[inline(always)]
 fn pc_moves<const PC: usize>(moves: &mut MoveList, occ: u64, friends: u64, opps: u64, mut attackers: u64) {
     let mut from: u8;
     let mut idx: usize;
@@ -70,6 +71,7 @@ fn pc_moves<const PC: usize>(moves: &mut MoveList, occ: u64, friends: u64, opps:
     }
 }
 
+#[inline(always)]
 fn pawn_captures(moves: &mut MoveList, mut attackers: u64, opps: u64, c: usize) {
     let (mut from, mut to): (u8, u8);
     let mut attacks: u64;
@@ -93,6 +95,7 @@ fn pawn_captures(moves: &mut MoveList, mut attackers: u64, opps: u64, c: usize) 
     }
 }
 
+#[inline(always)]
 fn en_passants(moves: &mut MoveList, pawns: u64, sq: u8, c: usize) {
     let mut attackers: u64 = PATT[c ^ 1][sq as usize] & pawns;
     let mut from: u8;
@@ -112,6 +115,7 @@ fn idx_shift<const AMOUNT: u8>(idx: u8, c: usize) -> u8 {
     if c == WH {idx + AMOUNT} else {idx - AMOUNT}
 }
 
+#[inline(always)]
 fn pawn_pushes<const SIDE: usize>(moves: &mut MoveList, occupied: u64, pawns: u64) {
     let empty: u64 = !occupied;
     let mut pushable_pawns: u64 = shift(empty, SIDE) & pawns;

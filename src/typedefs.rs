@@ -6,7 +6,7 @@ pub struct Pos {
     pub state: State,
 }
 
-#[derive(Copy, Clone, Default)]
+#[derive(Copy, Clone)]
 pub struct State {
     pub enp: u8,
     pub hfm: u8,
