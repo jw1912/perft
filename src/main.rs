@@ -7,8 +7,6 @@ pub use typedefs::*;
 pub use consts::*;
 use std::time::Instant;
 
-macro_rules! parse {($type: ty, $s: expr, $else: expr) => {$s.parse::<$type>().unwrap_or($else)}}
-
 const POSITIONS: [(&str, u8, u64); 6] = [
     ("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 6, 119_060_324),
     ("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1", 5, 193_690_690),
@@ -48,11 +46,6 @@ fn perft(pos: &Pos, depth_left: u8) -> u64 {
     positions
 }
 
-fn sq_to_idx(sq: &str) -> u8 {
-    let chs: Vec<char> = sq.chars().collect();
-    8 * parse!(u8, chs[1].to_string(), 0) + chs[0] as u8 - 105
-}
-
 fn parse_fen(fen: &str) -> Pos {
     let mut pos = Pos { pc: [0; 6], s: [0; 2], c: 0, state: State { enp: 0, hfm: 0, cr: 0 } };
     let vec: Vec<&str> = fen.split_whitespace().collect();
@@ -60,7 +53,7 @@ fn parse_fen(fen: &str) -> Pos {
     let (mut row, mut col): (i16, i16) = (7, 0);
     for ch in p {
         if ch == '/' { row -= 1; col = 0; }
-        else if ('1'..='8').contains(&ch) { col += parse!(i16, ch.to_string(), 0) }
+        else if ('1'..='8').contains(&ch) { col += ch.to_string().parse::<i16>().unwrap_or(0) }
         else {
             let idx: usize = ['P','N','B','R','Q','K','p','n','b','r','q','k'].iter().position(|&element| element == ch).unwrap_or(6);
             pos.toggle((idx > 5) as usize, idx - 6 * ((idx > 5) as usize), 1 << (8 * row + col));
@@ -70,8 +63,11 @@ fn parse_fen(fen: &str) -> Pos {
     pos.c = (vec[1] == "b") as usize;
     let mut cr: u8 = 0;
     for ch in vec[2].chars() {cr |= match ch {'Q' => WQS, 'K' => WKS, 'q' => BQS, 'k' => BKS, _ => 0}}
-    let enp: u8 = if vec[3] == "-" {0} else {sq_to_idx(vec[3])};
-    let hfm: u8 = parse!(u8, vec.get(4).unwrap_or(&"0"), 0);
+    let enp: u8 = if vec[3] == "-" {0} else {
+        let chs: Vec<char> = vec[3].chars().collect();
+        8 * chs[1].to_string().parse::<u8>().unwrap_or(0) + chs[0] as u8 - 105
+    };
+    let hfm: u8 = vec.get(4).unwrap_or(&"0").parse::<u8>().unwrap_or(0);
     pos.state = State {enp, hfm, cr};
     pos
 }

@@ -1,8 +1,6 @@
 use super::*;
 
 macro_rules! lsb {($x:expr, $t:ty) => {$x.trailing_zeros() as $t}}
-macro_rules! msb {($x:expr, $t:ty) => {63 ^ $x.leading_zeros() as $t}}
-macro_rules! bit {($x:expr) => {1 << $x}}
 
 #[inline(always)]
 pub fn batt(idx: usize, occ: u64) -> u64 {
@@ -35,7 +33,7 @@ pub fn ratt(idx: usize, occ: u64) -> u64 {
     let mut sq: usize = lsb!((e & occ) | MSB, usize);
     e ^= EA[sq];
     let mut w: u64 = WE[idx];
-    sq = msb!((w & occ)| LSB, usize);
+    sq = (((w & occ)| LSB).leading_zeros() ^ 63) as usize;
     w ^= WE[sq];
     f | e | w
 }
@@ -65,8 +63,8 @@ impl Pos {
     }
 
     pub fn do_move(&mut self, m: Move) -> bool {
-        let f: u64 = bit!(m.from);
-        let t: u64 = bit!(m.to);
+        let f: u64 = 1 << m.from;
+        let t: u64 = 1 << m.to;
         let mpc: usize = m.mpc as usize;
         let cpc: usize = if m.flag & CAP == 0 || m.flag == ENP {E} else {self.get_pc(t)};
         let opp: usize = self.c ^ 1;
