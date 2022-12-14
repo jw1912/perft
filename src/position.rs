@@ -89,7 +89,7 @@ impl Pos {
         }
         self.state.hfm = if mpc > P && cpc != E {0} else {self.state.hfm + 1};
         self.c ^= 1;
-        
+
         let king_idx: usize = lsb!(self.pc[K] & self.s[self.c ^ 1], usize);
         self.is_sq_att(king_idx, self.c ^ 1, self.s[0] | self.s[1])
     }
