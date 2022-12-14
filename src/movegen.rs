@@ -18,13 +18,8 @@ impl Pos {
         let friends: u64 = self.s[self.c];
         let opps: u64 = self.s[self.c ^ 1];
         let pawns: u64 = self.pc[P] & friends;
-        if self.c == WH {
-            pawn_pushes::<WH>(moves, occ, pawns);
-            pawn_captures::<WH>(moves, pawns, opps);
-        } else {
-            pawn_pushes::<BL>(moves, occ, pawns);
-            pawn_captures::<BL>(moves, pawns, opps);
-        }
+        if self.c == WH {pawn_pushes::<WH>(moves, occ, pawns);} else {pawn_pushes::<BL>(moves, occ, pawns);}
+        pawn_captures(moves, pawns, opps, self.c);
         if self.state.enp > 0 {en_passants(moves, pawns, self.state.enp, self.c)}
         pc_moves::<N>(moves, occ, friends, opps, self.pc[N]);
         pc_moves::<B>(moves, occ, friends, opps, self.pc[B]);
@@ -75,19 +70,19 @@ fn pc_moves<const PC: usize>(moves: &mut MoveList, occ: u64, friends: u64, opps:
     }
 }
 
-fn pawn_captures<const C: usize>(moves: &mut MoveList, mut attackers: u64, opps: u64) {
+fn pawn_captures(moves: &mut MoveList, mut attackers: u64, opps: u64, c: usize) {
     let (mut from, mut cidx): (u8, u8);
     let mut attacks: u64;
-    let mut promo_attackers: u64 = attackers & PENRANK[C];
-    attackers &= !PENRANK[C];
+    let mut promo_attackers: u64 = attackers & PENRANK[c];
+    attackers &= !PENRANK[c];
     while attackers > 0 {
         pop_lsb!(from, attackers);
-        attacks = PATT[C][from as usize] & opps;
+        attacks = PATT[c][from as usize] & opps;
         encode::<P, CAP>(moves, attacks, from);
     }
     while promo_attackers > 0 {
         pop_lsb!(from, promo_attackers);
-        attacks = PATT[C][from as usize] & opps;
+        attacks = PATT[c][from as usize] & opps;
         while attacks > 0 {
             pop_lsb!(cidx, attacks);
             moves.push(from, cidx, QPROMO_CAP, P as u8);
