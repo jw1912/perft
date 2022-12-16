@@ -9,7 +9,7 @@ pub struct MoveList {
 
 impl Default for MoveList {
     fn default() -> Self {
-        Self {list: unsafe {#[allow(clippy::uninit_assumed_init)] std::mem::MaybeUninit::uninit().assume_init()}, len: 0}
+        Self {list: unsafe {#[allow(clippy::uninit_assumed_init, invalid_value)] std::mem::MaybeUninit::uninit().assume_init()}, len: 0}
     }
 }
 impl MoveList {

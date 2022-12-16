@@ -23,7 +23,7 @@ fn main() {
         let pos = parse_fen(fen);
         println!("Position: {fen}");
         let now: Instant = Instant::now();
-        let count: u64 = perft(&pos, d as u8);
+        let count: u64 = perft(&pos, d);
         total += count;
         assert_eq!(count, exp);
         let dur = now.elapsed();
