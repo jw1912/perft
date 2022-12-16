@@ -77,10 +77,10 @@ impl Pos {
         if cpc == R { self.state.cr &= CR[m.to as usize] }
         if mpc == R || mpc == K { self.state.cr &= CR[m.from as usize] }
         match m.flag {
-            ENP => self.toggle(opp, P, if opp == WH {t << 8} else {t >> 8}),
             DBL => self.state.enp = if opp == BL {m.to - 8} else {m.to + 8},
             KS => self.toggle(side, R, CKM[side]),
             QS => self.toggle(side, R, CQM[side]),
+            ENP => self.toggle(opp, P, if opp == WH {t << 8} else {t >> 8}),
             PROMO.. => {
                 self.pc[mpc] ^= t;
                 self.pc[((m.flag & 3) + 1) as usize] ^= t;
