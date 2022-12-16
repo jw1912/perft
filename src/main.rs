@@ -2,7 +2,7 @@ mod consts;
 mod position;
 mod movegen;
 
-pub use position::{Move, Pos, State};
+pub use position::{Move, Pos};
 pub use movegen::MoveList;
 pub use consts::*;
 use std::time::Instant;
@@ -47,7 +47,7 @@ fn perft(pos: &Pos, depth_left: u8) -> u64 {
 }
 
 fn parse_fen(fen: &str) -> Pos {
-    let mut pos = Pos { pc: [0; 6], s: [0; 2], c: 0, state: State { enp: 0, hfm: 0, cr: 0 } };
+    let mut pos = Pos { pc: [0; 6], s: [0; 2], c: 0, enp: 0, hfm: 0, cr: 0 };
     let vec: Vec<&str> = fen.split_whitespace().collect();
     let p: Vec<char> = vec[0].chars().collect();
     let (mut row, mut col): (i16, i16) = (7, 0);
@@ -61,13 +61,11 @@ fn parse_fen(fen: &str) -> Pos {
         }
     }
     pos.c = (vec[1] == "b") as usize;
-    let mut cr: u8 = 0;
-    for ch in vec[2].chars() {cr |= match ch {'Q' => WQS, 'K' => WKS, 'q' => BQS, 'k' => BKS, _ => 0}}
-    let enp: u8 = if vec[3] == "-" {0} else {
+    for ch in vec[2].chars() {pos.cr |= match ch {'Q' => WQS, 'K' => WKS, 'q' => BQS, 'k' => BKS, _ => 0}}
+    pos.enp = if vec[3] == "-" {0} else {
         let chs: Vec<char> = vec[3].chars().collect();
         8 * chs[1].to_string().parse::<u8>().unwrap_or(0) + chs[0] as u8 - 105
     };
-    let hfm: u8 = vec.get(4).unwrap_or(&"0").parse::<u8>().unwrap_or(0);
-    pos.state = State {enp, hfm, cr};
+    pos.hfm = vec.get(4).unwrap_or(&"0").parse::<u8>().unwrap_or(0);
     pos
 }

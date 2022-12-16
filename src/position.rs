@@ -5,11 +5,6 @@ pub struct Pos {
     pub pc: [u64; 6],
     pub s: [u64; 2],
     pub c: usize,
-    pub state: State,
-}
-
-#[derive(Copy, Clone)]
-pub struct State {
     pub enp: u8,
     pub hfm: u8,
     pub cr: u8,
@@ -92,13 +87,13 @@ impl Pos {
         self.c ^= 1;
         let opp: usize = self.c;
         self.toggle(side, mpc, f | t);
-        self.state.enp = 0;
-        self.state.hfm = if mpc == P || cpc != E {0} else {self.state.hfm + 1};
+        self.enp = 0;
+        self.hfm = if mpc == P || cpc != E {0} else {self.hfm + 1};
         if cpc != E { self.toggle(opp, cpc, t) }
-        if cpc == R { self.state.cr &= CR[m.to as usize] }
-        if mpc == R || mpc == K { self.state.cr &= CR[m.from as usize] }
+        if cpc == R { self.cr &= CR[m.to as usize] }
+        if mpc == R || mpc == K { self.cr &= CR[m.from as usize] }
         match m.flag {
-            DBL => self.state.enp = if opp == BL {m.to - 8} else {m.to + 8},
+            DBL => self.enp = if opp == BL {m.to - 8} else {m.to + 8},
             KS => self.toggle(side, R, CKM[side]),
             QS => self.toggle(side, R, CQM[side]),
             ENP => self.toggle(opp, P, if opp == WH {t << 8} else {t >> 8}),
