@@ -40,8 +40,8 @@ impl Pos {
             if self.cr & SIDES[side] > 0 && !self.is_sq_att(4 + 56 * (side == BL) as usize, side, occ) {self.castles(moves, occ)}
             if side == WH {pawn_pushes::<WH>(moves, occ, pawns);} else {pawn_pushes::<BL>(moves, occ, pawns);}
         }
-        pawn_captures(moves, pawns, opps, side);
         if self.enp > 0 {en_passants(moves, pawns, self.enp, side)}
+        pawn_captures(moves, pawns, opps, side);
         pc_moves::<N, QUIETS>(moves, occ, friends, opps, self.pc[N]);
         pc_moves::<B, QUIETS>(moves, occ, friends, opps, self.pc[B]);
         pc_moves::<R, QUIETS>(moves, occ, friends, opps, self.pc[R]);
