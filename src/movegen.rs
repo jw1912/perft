@@ -2,6 +2,24 @@ use super::{*, position::{ratt, batt}};
 
 macro_rules! pop_lsb {($idx:expr, $x:expr) => {$idx = $x.trailing_zeros() as u8; $x &= $x - 1}}
 
+pub struct MoveList {
+    pub list: [Move; 252],
+    pub len: usize,
+}
+
+impl Default for MoveList {
+    fn default() -> Self {
+        Self {list: unsafe {#[allow(clippy::uninit_assumed_init)] std::mem::MaybeUninit::uninit().assume_init()}, len: 0}
+    }
+}
+impl MoveList {
+    #[inline(always)]
+    pub fn push(&mut self, from: u8, to: u8, flag: u8, mpc: u8) {
+        self.list[self.len] = Move {from, to, flag, mpc};
+        self.len += 1;
+    }
+}
+
 #[inline(always)]
 fn encode<const PC: usize, const FLAG: u8>(moves: &mut MoveList, mut attacks: u64, from: u8) {
     let mut to: u8;

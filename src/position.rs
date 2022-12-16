@@ -2,6 +2,29 @@ use super::*;
 
 macro_rules! lsb {($x:expr, $t:ty) => {$x.trailing_zeros() as $t}}
 
+#[derive(Copy, Clone)]
+pub struct Pos {
+    pub pc: [u64; 6],
+    pub s: [u64; 2],
+    pub c: usize,
+    pub state: State,
+}
+
+#[derive(Copy, Clone)]
+pub struct State {
+    pub enp: u8,
+    pub hfm: u8,
+    pub cr: u8,
+}
+
+#[derive(Copy, Clone)]
+pub struct Move {
+    pub from: u8,
+    pub to: u8,
+    pub flag: u8,
+    pub mpc: u8,
+}
+
 #[inline(always)]
 pub fn batt(idx: usize, occ: u64) -> u64 {
     let m: Mask = unsafe{*MASKS.get_unchecked(idx)};

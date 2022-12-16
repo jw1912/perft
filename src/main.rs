@@ -1,9 +1,9 @@
-mod typedefs;
 mod consts;
 mod position;
 mod movegen;
 
-pub use typedefs::*;
+pub use position::{Move, Pos, State};
+pub use movegen::MoveList;
 pub use consts::*;
 use std::time::Instant;
 

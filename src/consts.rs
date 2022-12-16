@@ -1,5 +1,3 @@
-use super::Mask;
-
 // pcs / sides
 pub const P: usize = 0;
 pub const N: usize = 1;
@@ -62,6 +60,14 @@ pub const PATT: [[u64; 64];2] = [
 ];
 
 // hyperbola quintessence rook and bishop attacks
+#[derive(Clone, Copy)]
+pub struct Mask {
+    pub bitmask: u64,
+    pub diag: u64,
+    pub antidiag: u64,
+    pub file: u64,
+}
+
 pub static MASKS: [Mask; 64] = masks();
 const fn masks() -> [Mask; 64] {
     let mut masks: [Mask; 64] = [Mask { bitmask: 0, diag: 0, antidiag: 0, file: 0} ; 64];
