@@ -4,7 +4,7 @@ use super::*;
 pub struct Pos {
     pub pc: [u64; 6],
     pub s: [u64; 2],
-    pub c: usize,
+    pub c: u8,
     pub enp: u8,
     pub hfm: u8,
     pub cr: u8,
@@ -83,9 +83,9 @@ impl Pos {
         let t: u64 = 1 << m.to;
         let mpc: usize = m.mpc as usize;
         let cpc: usize = if m.flag & CAP == 0 || m.flag == ENP {E} else {self.get_pc(t)};
-        let side: usize = self.c;
+        let side: usize = self.c as usize;
         self.c ^= 1;
-        let opp: usize = self.c;
+        let opp: usize = self.c as usize;
         self.toggle(side, mpc, f | t);
         self.enp = 0;
         self.hfm = if mpc == P || cpc != E {0} else {self.hfm + 1};

@@ -60,7 +60,7 @@ fn parse_fen(fen: &str) -> Pos {
             col += 1;
         }
     }
-    pos.c = (vec[1] == "b") as usize;
+    pos.c = (vec[1] == "b") as u8;
     for ch in vec[2].chars() {pos.cr |= match ch {'Q' => WQS, 'K' => WKS, 'q' => BQS, 'k' => BKS, _ => 0}}
     pos.enp = if vec[3] == "-" {0} else {
         let chs: Vec<char> = vec[3].chars().collect();
