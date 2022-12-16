@@ -17,7 +17,7 @@ pub struct State {
     pub cr: u8,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 pub struct Move {
     pub from: u8,
     pub to: u8,
@@ -27,7 +27,7 @@ pub struct Move {
 
 #[inline(always)]
 pub fn batt(idx: usize, occ: u64) -> u64 {
-    let m: Mask = unsafe{*MASKS.get_unchecked(idx)};
+    let m: Mask = MASKS[idx];
     let mut f: u64 = occ & m.diag;
     let mut r: u64 = f.swap_bytes();
     f -= m.bitmask;
