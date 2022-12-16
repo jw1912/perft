@@ -1,7 +1,5 @@
 use super::*;
 
-macro_rules! lsb {($x:expr, $t:ty) => {$x.trailing_zeros() as $t}}
-
 #[derive(Copy, Clone)]
 pub struct Pos {
     pub pc: [u64; 6],
@@ -53,7 +51,7 @@ pub fn ratt(idx: usize, occ: u64) -> u64 {
     f ^= r.swap_bytes();
     f &= m.file;
     let mut e: u64 = EA[idx];
-    let mut sq: usize = lsb!((e & occ) | MSB, usize);
+    let mut sq: usize = ((e & occ) | MSB).trailing_zeros() as usize;
     e ^= EA[sq];
     let mut w: u64 = WE[idx];
     sq = (((w & occ)| LSB).leading_zeros() ^ 63) as usize;
@@ -110,7 +108,7 @@ impl Pos {
             }
             _ => {}
         }
-        let king_idx: usize = lsb!(self.pc[K] & self.s[side], usize);
+        let king_idx: usize = (self.pc[K] & self.s[side]).trailing_zeros() as usize;
         self.is_sq_att(king_idx, side, self.s[0] | self.s[1])
     }
 }
