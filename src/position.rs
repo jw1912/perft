@@ -2,11 +2,9 @@ use super::*;
 
 #[derive(Copy, Clone)]
 pub struct Pos {
-    pub pc: [u64; 6],
-    pub s: [u64; 2],
+    pub bb: [u64; 8],
     pub c: u8,
     pub enp: u8,
-    pub hfm: u8,
     pub cr: u8,
 }
 
@@ -56,26 +54,26 @@ pub fn ratt(idx: usize, occ: u64) -> u64 {
 
 impl Pos {
     #[inline(always)]
-    pub fn toggle(&mut self, side: usize, pc: usize, bit: u64) {
-        self.pc[pc] ^= bit;
-        self.s[side] ^= bit;
+    pub fn toggle(&mut self, c: usize, pc: usize, bit: u64) {
+        self.bb[pc] ^= bit;
+        self.bb[c] ^= bit;
     }
 
     #[inline(always)]
     pub fn is_sq_att(&self, idx: usize, side: usize, occ: u64) -> bool {
-        let s: u64 = self.s[side ^ 1];
-        let opp_queen: u64 = self.pc[Q] & s;
-        (NATT[idx] & self.pc[N] & s > 0) || (KATT[idx] & self.pc[K] & s > 0)
-        || (PATT[side][idx] & self.pc[P] & s > 0)
-        || (ratt(idx, occ) & (self.pc[R] & s | opp_queen) > 0)
-        || (batt(idx, occ) & (self.pc[B] & s | opp_queen) > 0)
+        let s: u64 = self.bb[side ^ 1];
+        let opp_queen: u64 = self.bb[Q] & s;
+        (NATT[idx] & self.bb[N] & s > 0) || (KATT[idx] & self.bb[K] & s > 0)
+        || (PATT[side][idx] & self.bb[P] & s > 0)
+        || (ratt(idx, occ) & (self.bb[R] & s | opp_queen) > 0)
+        || (batt(idx, occ) & (self.bb[B] & s | opp_queen) > 0)
     }
 
     #[inline(always)]
     pub fn get_pc(&self, bit: u64) -> usize {
-        ((self.pc[N] | self.pc[R] | self.pc[K]) & bit > 0) as usize
-        | (2 * ((self.pc[B] | self.pc[R]) & bit > 0) as usize)
-        | (4 * ((self.pc[Q] | self.pc[K]) & bit > 0) as usize)
+        ((self.bb[N] | self.bb[R] | self.bb[K]) & bit > 0) as usize
+        | (2 * ((self.bb[P] | self.bb[N] | self.bb[Q] | self.bb[K]) & bit > 0) as usize)
+        | (4 * ((self.bb[B] | self.bb[R] | self.bb[Q] | self.bb[K]) & bit > 0) as usize)
     }
 
     pub fn do_move(&mut self, m: Move) -> bool {
@@ -88,7 +86,6 @@ impl Pos {
         let opp: usize = self.c as usize;
         self.toggle(side, mpc, f | t);
         self.enp = 0;
-        self.hfm = if mpc == P || cpc != E {0} else {self.hfm + 1};
         if cpc != E { self.toggle(opp, cpc, t) }
         if cpc == R { self.cr &= CR[m.to as usize] }
         if mpc == R || mpc == K { self.cr &= CR[m.from as usize] }
@@ -98,12 +95,12 @@ impl Pos {
             QS => self.toggle(side, R, CQM[side]),
             ENP => self.toggle(opp, P, if opp == WH {t << 8} else {t >> 8}),
             PROMO.. => {
-                self.pc[mpc] ^= t;
-                self.pc[((m.flag & 3) + 1) as usize] ^= t;
+                self.bb[mpc] ^= t;
+                self.bb[((m.flag & 3) + 3) as usize] ^= t;
             }
             _ => {}
         }
-        let king_idx: usize = (self.pc[K] & self.s[side]).trailing_zeros() as usize;
-        self.is_sq_att(king_idx, side, self.s[0] | self.s[1])
+        let king_idx: usize = (self.bb[K] & self.bb[side]).trailing_zeros() as usize;
+        self.is_sq_att(king_idx, side, self.bb[0] | self.bb[1])
     }
 }

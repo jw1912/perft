@@ -47,7 +47,7 @@ fn perft(pos: &Pos, depth_left: u8) -> u64 {
 }
 
 fn parse_fen(fen: &str) -> Pos {
-    let mut pos = Pos { pc: [0; 6], s: [0; 2], c: 0, enp: 0, hfm: 0, cr: 0 };
+    let mut pos = Pos { bb: [0; 8], c: 0, enp: 0, cr: 0 };
     let vec: Vec<&str> = fen.split_whitespace().collect();
     let p: Vec<char> = vec[0].chars().collect();
     let (mut row, mut col): (i16, i16) = (7, 0);
@@ -56,7 +56,7 @@ fn parse_fen(fen: &str) -> Pos {
         else if ('1'..='8').contains(&ch) { col += ch.to_string().parse::<i16>().unwrap_or(0) }
         else {
             let idx: usize = ['P','N','B','R','Q','K','p','n','b','r','q','k'].iter().position(|&element| element == ch).unwrap_or(6);
-            pos.toggle((idx > 5) as usize, idx - 6 * ((idx > 5) as usize), 1 << (8 * row + col));
+            pos.toggle((idx > 5) as usize, idx + 2 - 6 * ((idx > 5) as usize), 1 << (8 * row + col));
             col += 1;
         }
     }
@@ -66,6 +66,5 @@ fn parse_fen(fen: &str) -> Pos {
         let chs: Vec<char> = vec[3].chars().collect();
         8 * chs[1].to_string().parse::<u8>().unwrap_or(0) + chs[0] as u8 - 105
     };
-    pos.hfm = vec.get(4).unwrap_or(&"0").parse::<u8>().unwrap_or(0);
     pos
 }

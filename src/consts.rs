@@ -1,13 +1,13 @@
 // pcs / sides
-pub const P: usize = 0;
-pub const N: usize = 1;
-pub const B: usize = 2;
-pub const R: usize = 3;
-pub const Q: usize = 4;
-pub const K: usize = 5;
-pub const E: usize = 6;
+pub const E: usize = 0;
 pub const WH: usize = 0;
 pub const BL: usize = 1;
+pub const P: usize = 2;
+pub const N: usize = 3;
+pub const B: usize = 4;
+pub const R: usize = 5;
+pub const Q: usize = 6;
+pub const K: usize = 7;
 
 // move flags
 pub const QUIET: u8 = 0;

@@ -32,21 +32,21 @@ fn encode<const PC: usize, const FLAG: u8>(moves: &mut MoveList, mut attacks: u6
 impl Pos {
     pub fn gen<const QUIETS: bool>(&self, moves: &mut MoveList) {
         let side = self.c as usize;
-        let occ: u64 = self.s[0] | self.s[1];
-        let friends: u64 = self.s[side];
-        let opps: u64 = self.s[side ^ 1];
-        let pawns: u64 = self.pc[P] & friends;
+        let occ: u64 = self.bb[0] | self.bb[1];
+        let friends: u64 = self.bb[side];
+        let opps: u64 = self.bb[side ^ 1];
+        let pawns: u64 = self.bb[P] & friends;
         if QUIETS {
             if self.cr & SIDES[side] > 0 && !self.is_sq_att(4 + 56 * (side == BL) as usize, side, occ) {self.castles(moves, occ)}
             if side == WH {pawn_pushes::<WH>(moves, occ, pawns);} else {pawn_pushes::<BL>(moves, occ, pawns);}
         }
         if self.enp > 0 {en_passants(moves, pawns, self.enp, side)}
         pawn_captures(moves, pawns, opps, side);
-        pc_moves::<N, QUIETS>(moves, occ, friends, opps, self.pc[N]);
-        pc_moves::<B, QUIETS>(moves, occ, friends, opps, self.pc[B]);
-        pc_moves::<R, QUIETS>(moves, occ, friends, opps, self.pc[R]);
-        pc_moves::<Q, QUIETS>(moves, occ, friends, opps, self.pc[Q]);
-        pc_moves::<K, QUIETS>(moves, occ, friends, opps, self.pc[K]);
+        pc_moves::<N, QUIETS>(moves, occ, friends, opps, self.bb[N]);
+        pc_moves::<B, QUIETS>(moves, occ, friends, opps, self.bb[B]);
+        pc_moves::<R, QUIETS>(moves, occ, friends, opps, self.bb[R]);
+        pc_moves::<Q, QUIETS>(moves, occ, friends, opps, self.bb[Q]);
+        pc_moves::<K, QUIETS>(moves, occ, friends, opps, self.bb[K]);
     }
 
     #[inline(always)]
