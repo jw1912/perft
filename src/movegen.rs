@@ -123,30 +123,30 @@ fn en_passants(moves: &mut MoveList, pawns: u64, sq: u8, c: usize) {
 }
 
 #[inline(always)]
-fn shift(bb: u64, c: usize) -> u64 {
-    if c == WH {bb >> 8} else {bb << 8}
+fn shift<const SIDE: usize>(bb: u64) -> u64 {
+    if SIDE == WH {bb >> 8} else {bb << 8}
 }
 
 #[inline(always)]
-fn idx_shift<const AMOUNT: u8>(idx: u8, c: usize) -> u8 {
-    if c == WH {idx + AMOUNT} else {idx - AMOUNT}
+fn idx_shift<const SIDE: usize, const AMOUNT: u8>(idx: u8) -> u8 {
+    if SIDE == WH {idx + AMOUNT} else {idx - AMOUNT}
 }
 
 #[inline(always)]
 fn pawn_pushes<const SIDE: usize>(moves: &mut MoveList, occupied: u64, pawns: u64) {
     let empty: u64 = !occupied;
-    let mut pushable_pawns: u64 = shift(empty, SIDE) & pawns;
-    let mut dbl_pushable_pawns: u64 = shift(shift(empty & DBLRANK[SIDE], SIDE) & empty, SIDE) & pawns;
+    let mut pushable_pawns: u64 = shift::<SIDE>(empty) & pawns;
+    let mut dbl_pushable_pawns: u64 = shift::<SIDE>(shift::<SIDE>(empty & DBLRANK[SIDE]) & empty) & pawns;
     let mut promotable_pawns: u64 = pushable_pawns & PENRANK[SIDE];
     pushable_pawns &= !PENRANK[SIDE];
     let mut from: u8;
     while pushable_pawns > 0 {
         pop_lsb!(from, pushable_pawns);
-        moves.push(from, idx_shift::<8>(from, SIDE), QUIET, P as u8);
+        moves.push(from, idx_shift::<SIDE, 8>(from), QUIET, P as u8);
     }
     while promotable_pawns > 0 {
         pop_lsb!(from, promotable_pawns);
-        let to: u8 = idx_shift::<8>(from, SIDE);
+        let to: u8 = idx_shift::<SIDE, 8>(from);
         moves.push(from, to, QPROMO, P as u8);
         moves.push(from, to, PROMO , P as u8);
         moves.push(from, to, BPROMO, P as u8);
@@ -154,6 +154,6 @@ fn pawn_pushes<const SIDE: usize>(moves: &mut MoveList, occupied: u64, pawns: u6
     }
     while dbl_pushable_pawns > 0 {
         pop_lsb!(from, dbl_pushable_pawns);
-        moves.push(from, idx_shift::<16>(from, SIDE), DBL, P as u8);
+        moves.push(from, idx_shift::<SIDE, 16>(from), DBL, P as u8);
     }
 }
