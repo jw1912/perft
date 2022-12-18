@@ -84,7 +84,7 @@ impl Pos {
         let cpc: usize = if m.flag & CAP == 0 || m.flag == ENP {E} else {self.get_pc(t)};
 
         // flipping side to move
-        let side: usize = self.c as usize;
+        let side: usize = usize::from(self.c);
         self.c = !self.c;
 
         // en passant and castling rights

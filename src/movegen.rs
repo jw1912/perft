@@ -31,7 +31,7 @@ fn encode<const PC: usize, const FLAG: u8>(moves: &mut MoveList, mut attacks: u6
 
 impl Pos {
     pub fn gen(&self, moves: &mut MoveList) {
-        let side: usize = self.c as usize;
+        let side: usize = usize::from(self.c);
         let occ: u64 = self.bb[0] | self.bb[1];
         let friends: u64 = self.bb[side];
         let opps: u64 = self.bb[side ^ 1];
@@ -49,7 +49,7 @@ impl Pos {
 
     #[inline(always)]
     fn castles(&self, moves: &mut MoveList, occ: u64) {
-        let r = self.cr;
+        let r: u8 = self.cr;
         if self.c {
             if r & BQS > 0 && occ & B8C8D8 == 0 && !self.is_sq_att(59, BL, occ) {
                 moves.push(60, 58, QS, K as u8);
