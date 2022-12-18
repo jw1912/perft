@@ -3,7 +3,7 @@ use super::*;
 #[derive(Copy, Clone)]
 pub struct Pos {
     pub bb: [u64; 8],
-    pub c: u8,
+    pub c: bool,
     pub enp: u8,
     pub cr: u8,
 }
@@ -85,7 +85,7 @@ impl Pos {
 
         // flipping side to move
         let side: usize = self.c as usize;
-        self.c ^= 1;
+        self.c = !self.c;
 
         // en passant and castling rights
         self.enp = 0;
