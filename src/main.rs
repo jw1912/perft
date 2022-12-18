@@ -5,7 +5,7 @@ mod movegen;
 pub use position::{Move, Pos};
 pub use movegen::MoveList;
 pub use consts::*;
-use std::time::Instant;
+use std::time::{Instant, Duration};
 
 const POSITIONS: [(&str, u8, u64); 6] = [
     ("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 6, 119_060_324),
@@ -20,21 +20,21 @@ fn main() {
     let initial: Instant = Instant::now();
     let mut total: u64 = 0;
     for (fen, d, exp) in POSITIONS {
-        let pos = parse_fen(fen);
+        let pos: Pos = parse_fen(fen);
         println!("Position: {fen}");
         let now: Instant = Instant::now();
         let count: u64 = perft(&pos, d);
         total += count;
         assert_eq!(count, exp);
-        let dur = now.elapsed();
+        let dur: Duration = now.elapsed();
         println!("depth {} time {} nodes {count} Mnps {:.2}\n", d, dur.as_millis(), count as f64 / dur.as_micros() as f64);
     }
-    let dur = initial.elapsed();
+    let dur: Duration = initial.elapsed();
     println!("total time {} nodes {} nps {:.3}", dur.as_millis(), total, total as f64 / dur.as_micros() as f64)
 }
 
 fn perft(pos: &Pos, depth_left: u8) -> u64 {
-    let mut moves = MoveList::default();
+    let mut moves: MoveList = MoveList::default();
     let mut tmp: Pos;
     let mut positions: u64 = 0;
     pos.gen(&mut moves);
@@ -47,7 +47,7 @@ fn perft(pos: &Pos, depth_left: u8) -> u64 {
 }
 
 fn parse_fen(fen: &str) -> Pos {
-    let mut pos = Pos { bb: [0; 8], c: 0, enp: 0, cr: 0 };
+    let mut pos: Pos = Pos { bb: [0; 8], c: 0, enp: 0, cr: 0 };
     let vec: Vec<&str> = fen.split_whitespace().collect();
     let p: Vec<char> = vec[0].chars().collect();
     let (mut row, mut col): (i16, i16) = (7, 0);

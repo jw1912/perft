@@ -31,7 +31,7 @@ fn encode<const PC: usize, const FLAG: u8>(moves: &mut MoveList, mut attacks: u6
 
 impl Pos {
     pub fn gen(&self, moves: &mut MoveList) {
-        let side = self.c as usize;
+        let side: usize = self.c as usize;
         let occ: u64 = self.bb[0] | self.bb[1];
         let friends: u64 = self.bb[side];
         let opps: u64 = self.bb[side ^ 1];
