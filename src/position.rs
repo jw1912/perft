@@ -62,11 +62,11 @@ impl Pos {
     #[inline(always)]
     pub fn is_sq_att(&self, idx: usize, side: usize, occ: u64) -> bool {
         let s: u64 = self.bb[side ^ 1];
-        let opp_queen: u64 = self.bb[Q] & s;
-        (NATT[idx] & self.bb[N] & s > 0) || (KATT[idx] & self.bb[K] & s > 0)
+        (NATT[idx] & self.bb[N] & s > 0)
+        || (KATT[idx] & self.bb[K] & s > 0)
         || (PATT[side][idx] & self.bb[P] & s > 0)
-        || (ratt(idx, occ) & (self.bb[R] & s | opp_queen) > 0)
-        || (batt(idx, occ) & (self.bb[B] & s | opp_queen) > 0)
+        || (ratt(idx, occ) & ((self.bb[R] | self.bb[Q]) & s) > 0)
+        || (batt(idx, occ) & ((self.bb[B] | self.bb[Q]) & s) > 0)
     }
 
     #[inline(always)]

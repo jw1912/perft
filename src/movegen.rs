@@ -122,12 +122,10 @@ fn en_passants(moves: &mut MoveList, pawns: u64, sq: u8, c: usize) {
     }
 }
 
-#[inline(always)]
 fn shift<const SIDE: usize>(bb: u64) -> u64 {
     if SIDE == WH {bb >> 8} else {bb << 8}
 }
 
-#[inline(always)]
 fn idx_shift<const SIDE: usize, const AMOUNT: u8>(idx: u8) -> u8 {
     if SIDE == WH {idx + AMOUNT} else {idx - AMOUNT}
 }
