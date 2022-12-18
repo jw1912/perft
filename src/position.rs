@@ -77,29 +77,37 @@ impl Pos {
     }
 
     pub fn do_move(&mut self, m: Move) -> bool {
+        // extracting move info
         let f: u64 = 1 << m.from;
         let t: u64 = 1 << m.to;
         let mpc: usize = m.mpc as usize;
         let cpc: usize = if m.flag & CAP == 0 || m.flag == ENP {E} else {self.get_pc(t)};
+
+        // flipping side to move
         let side: usize = self.c as usize;
         self.c ^= 1;
-        let opp: usize = self.c as usize;
-        self.toggle(side, mpc, f | t);
+
+        // en passant and castling rights
         self.enp = 0;
-        if cpc != E { self.toggle(opp, cpc, t) }
         if cpc == R { self.cr &= CR[m.to as usize] }
         if mpc == R || mpc == K { self.cr &= CR[m.from as usize] }
+
+        // updating board
+        self.toggle(side, mpc, f | t);
+        if cpc != E { self.toggle(side ^ 1, cpc, t) }
         match m.flag {
-            DBL => self.enp = if opp == BL {m.to - 8} else {m.to + 8},
+            DBL => self.enp = if side == WH {m.to - 8} else {m.to + 8},
             KS => self.toggle(side, R, CKM[side]),
             QS => self.toggle(side, R, CQM[side]),
-            ENP => self.toggle(opp, P, if opp == WH {t << 8} else {t >> 8}),
+            ENP => self.toggle(side ^ 1, P, if side == BL {t << 8} else {t >> 8}),
             PROMO.. => {
                 self.bb[mpc] ^= t;
                 self.bb[((m.flag & 3) + 3) as usize] ^= t;
             }
             _ => {}
         }
+
+        // is move legal?
         let king_idx: usize = (self.bb[K] & self.bb[side]).trailing_zeros() as usize;
         self.is_sq_att(king_idx, side, self.bb[0] | self.bb[1])
     }
