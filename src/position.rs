@@ -43,12 +43,12 @@ pub fn ratt(idx: usize, occ: u64) -> u64 {
     r -= m.bitmask.swap_bytes();
     f ^= r.swap_bytes();
     f &= m.file;
-    let mut e: u64 = EA[idx];
+    let mut e: u64 = EAST[idx];
     let mut sq: usize = ((e & occ) | MSB).trailing_zeros() as usize;
-    e ^= EA[sq];
-    let mut w: u64 = WE[idx];
+    e ^= EAST[sq];
+    let mut w: u64 = WEST[idx];
     sq = (((w & occ)| LSB).leading_zeros() ^ 63) as usize;
-    w ^= WE[sq];
+    w ^= WEST[sq];
     f | e | w
 }
 
