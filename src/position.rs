@@ -21,16 +21,16 @@ pub fn batt(idx: usize, occ: u64) -> u64 {
     let m: Mask = MASKS[idx];
     let mut f: u64 = occ & m.diag;
     let mut r: u64 = f.swap_bytes();
-    f -= m.bitmask;
-    r -= m.bitmask.swap_bytes();
+    f -= m.bit;
+    r -= m.bit.swap_bytes();
     f ^= r.swap_bytes();
     f &= m.diag;
-    let mut f2: u64 = occ & m.antidiag;
+    let mut f2: u64 = occ & m.anti;
     r = f2.swap_bytes();
-    f2 -= m.bitmask;
-    r -= m.bitmask.swap_bytes();
+    f2 -= m.bit;
+    r -= m.bit.swap_bytes();
     f2 ^= r.swap_bytes();
-    f2 &= m.antidiag;
+    f2 &= m.anti;
     f | f2
 }
 
@@ -39,8 +39,8 @@ pub fn ratt(idx: usize, occ: u64) -> u64 {
     let m: Mask = MASKS[idx];
     let mut f: u64 = occ & m.file;
     let mut r: u64 = f.swap_bytes();
-    f -= m.bitmask;
-    r -= m.bitmask.swap_bytes();
+    f -= m.bit;
+    r -= m.bit.swap_bytes();
     f ^= r.swap_bytes();
     f &= m.file;
     let mut e: u64 = EAST[idx];

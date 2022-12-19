@@ -69,9 +69,9 @@ pub const PATT: [[u64; 64];2] = [
 // hyperbola quintessence rook and bishop attacks
 #[derive(Clone, Copy)]
 pub struct Mask {
-    pub bitmask: u64,
+    pub bit: u64,
     pub diag: u64,
-    pub antidiag: u64,
+    pub anti: u64,
     pub file: u64,
 }
 
@@ -88,12 +88,12 @@ pub const ANTIS: [u64; 15] = [
 ];
 
 pub static MASKS: [Mask; 64] = {
-    let mut masks: [Mask; 64] = [Mask { bitmask: 0, diag: 0, antidiag: 0, file: 0} ; 64];
+    let mut masks: [Mask; 64] = [Mask { bit: 0, diag: 0, anti: 0, file: 0} ; 64];
     let mut idx: usize = 0;
     while idx < 64 {
-        masks[idx].bitmask = 1 << idx;
+        masks[idx].bit = 1 << idx;
         masks[idx].diag = DIAGS[(7 + (idx & 7) - (idx >> 3))] ^ (1 << idx);
-        masks[idx].antidiag = ANTIS[((idx & 7) + (idx >> 3))] ^ (1 << idx);
+        masks[idx].anti = ANTIS[((idx & 7) + (idx >> 3))] ^ (1 << idx);
         masks[idx].file = (FILE << (idx & 7)) ^ (1 << idx) ;
         idx += 1;
     }
