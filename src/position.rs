@@ -44,10 +44,10 @@ pub fn ratt(idx: usize, occ: u64) -> u64 {
     f ^= r.swap_bytes();
     f &= m.file;
     let mut e: u64 = EAST[idx];
-    let mut sq: usize = ((e & occ) | MSB).trailing_zeros() as usize;
+    let mut sq: usize = ((e & occ) | 0x8000000000000000).trailing_zeros() as usize;
     e ^= EAST[sq];
     let mut w: u64 = WEST[idx];
-    sq = (((w & occ)| LSB).leading_zeros() ^ 63) as usize;
+    sq = (((w & occ)| 1).leading_zeros() ^ 63) as usize;
     w ^= WEST[sq];
     f | e | w
 }

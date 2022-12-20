@@ -11,32 +11,16 @@ macro_rules! init {
     }};
 }
 
-// pcs / sides
-pub const E: usize = 0;
-pub const WH: usize = 0;
-pub const BL: usize = 1;
-pub const P: usize = 2;
-pub const N: usize = 3;
-pub const B: usize = 4;
-pub const R: usize = 5;
-pub const Q: usize = 6;
-pub const K: usize = 7;
+// macro creates a set of constants similar to in a C enum, but with a strict type and starts at a given value
+macro_rules! c_enum {
+    ($type:ty, $val:expr, $name:ident) => {pub const $name: $type = $val;};
+    ($type:ty, $val:expr, $name:ident, $($b:tt),*) => {pub const $name: $type = $val; c_enum!($type, $val + 1, $($b),*);}
+}
 
-// move flags
-pub const QUIET: u8 = 0;
-pub const DBL: u8 = 1;
-pub const KS: u8 = 2;
-pub const QS: u8 = 3;
-pub const CAP: u8 = 4;
-pub const ENP: u8 = 5;
-pub const PROMO: u8 = 8;
-pub const BPROMO: u8 = 9;
-pub const RPROMO: u8 = 10;
-pub const QPROMO: u8 = 11;
-pub const PROMO_CAP: u8 = 12;
-pub const BPROMO_CAP: u8 = 13;
-pub const RPROMO_CAP: u8 = 14;
-pub const QPROMO_CAP: u8 = 15;
+// pieces, sides and moveflags
+pub const E: usize = 0;
+c_enum!(usize, 0, WH, BL, P, N, B, R, Q, K);
+c_enum!(u8, 0, QUIET, DBL, KS, QS, CAP, ENP, PROMO, BPROMO, RPROMO, QPROMO, PROMO_CAP, BPROMO_CAP, RPROMO_CAP, QPROMO_CAP);
 
 // castling
 pub const WQS: u8 = 8;
@@ -50,11 +34,7 @@ pub const B1C1D1: u64 = 14;
 pub const F1G1: u64 = 96;
 pub const B8C8D8: u64 = 0x0E00000000000000;
 pub const F8G8: u64 = 0x6000000000000000;
-pub const CR: [u8; 64] = init!(let mut idx = 0, idx, 0, match idx {0 => 7, 4 => 3, 7 => 11, 56 => 13, 60 => 12, 63 => 14, _ => 15,});
-
-// attacks
-pub const MSB: u64 = 0x80_00_00_00_00_00_00_00;
-pub const LSB: u64 = 1;
+pub const CR: [u8; 64] = init!(let mut idx = 0, idx, 0, match idx {0 => 7, 4 => 3, 7 => 11, 56 => 13, 60 => 12, 63 => 14, _ => 15});
 
 // for promotions / double pushes
 pub const PENRANK: [u64; 2] = [0x00FF000000000000, 0x000000000000FF00];
@@ -90,15 +70,6 @@ pub const KATT: [u64; 64] = init!(let mut idx = 0, idx, 0, {
     k ^ (1 << idx)
 });
 
-// hyperbola quintessence rook and bishop attacks
-#[derive(Clone, Copy)]
-pub struct Mask {
-    pub bit: u64,
-    pub diag: u64,
-    pub anti: u64,
-    pub file: u64,
-}
-
 // diagonals
 pub const DIAGS: [u64; 15] = [
     0x0100000000000000, 0x0201000000000000, 0x0402010000000000, 0x0804020100000000, 0x1008040201000000,
@@ -106,7 +77,16 @@ pub const DIAGS: [u64; 15] = [
     0x0000008040201008, 0x0000000080402010, 0x0000000000804020, 0x0000000000008040, 0x0000000000000080,
 ];
 
+// masks for hyperbola quintessence rook and bishop attacks
 pub const MASKS: [Mask; 64] = init!(let mut idx = 0, idx, Mask { bit: 0, diag: 0, anti: 0, file: 0 }, {
     let bit = 1 << idx;
     Mask { bit, diag: bit ^ DIAGS[(7 + (idx & 7) - (idx >> 3))], anti: bit ^ DIAGS[((idx & 7) + (idx >> 3))].swap_bytes(), file: bit ^ FILE << (idx & 7) }
 });
+
+#[derive(Clone, Copy)]
+pub struct Mask {
+    pub bit: u64,
+    pub diag: u64,
+    pub anti: u64,
+    pub file: u64,
+}
