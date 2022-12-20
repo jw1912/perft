@@ -23,17 +23,17 @@ c_enum!(usize, 0, WH, BL, P, N, B, R, Q, K);
 c_enum!(u8, 0, QUIET, DBL, KS, QS, CAP, ENP, E1, E2, PROMO, BPROMO, RPROMO, QPROMO, PROMO_CAP, BPROMO_CAP, RPROMO_CAP, QPROMO_CAP);
 
 // castling
-pub const WQS: u8 = 8;
-pub const WKS: u8 = 4;
-pub const BQS: u8 = 2;
-pub const BKS: u8 = 1;
-pub const SIDES: [u8; 2] = [WKS | WQS, BKS | BQS];
+pub const WQS: u8 = 0b1000;
+pub const WKS: u8 = 0b0100;
+pub const BQS: u8 = 0b0010;
+pub const BKS: u8 = 0b0001;
 pub const CKM: [u64; 2] = [160, 0xA000000000000000];
-pub const CQM: [u64; 2] = [9, 0x0900000000000000];
-pub const B1C1D1: u64 = 14;
-pub const F1G1: u64 = 96;
+pub const CQM: [u64; 2] = [  9, 0x0900000000000000];
+pub const B1C1D1: u64 = 0x000000000000000E;
+pub const   F1G1: u64 = 0x0000000000000060;
 pub const B8C8D8: u64 = 0x0E00000000000000;
-pub const F8G8: u64 = 0x6000000000000000;
+pub const   F8G8: u64 = 0x6000000000000000;
+pub const CS: [u8; 2] = [WKS | WQS, BKS | BQS];
 pub const CR: [u8; 64] = init!(let mut idx = 0, idx, 0, match idx {0 => 7, 4 => 3, 7 => 11, 56 => 13, 60 => 12, 63 => 14, _ => 15});
 
 // for promotions / double pushes
@@ -41,7 +41,7 @@ pub const PENRANK: [u64; 2] = [0x00FF000000000000, 0x000000000000FF00];
 pub const DBLRANK: [u64; 2] = [0x00000000FF000000, 0x000000FF00000000];
 
 // A file and ~(H file)
-pub const FILE: u64 = 0x0101_0101_0101_0101;
+pub const FILE: u64 = 0x0101010101010101;
 pub const NOTH: u64 = !(FILE << 7);
 
 // rook attacks on rank

@@ -36,7 +36,7 @@ impl Pos {
         let friends: u64 = self.bb[side];
         let opps: u64 = self.bb[side ^ 1];
         let pawns: u64 = self.bb[P] & friends;
-        if self.cr & SIDES[side] > 0 && !self.is_sq_att(4 + 56 * (side == BL) as usize, side, occ) {self.castles(moves, occ)}
+        if self.cr & CS[side] > 0 && !self.is_sq_att(4 + 56 * (side == BL) as usize, side, occ) {self.castles(moves, occ)}
         if side == WH {pawn_pushes::<WH>(moves, occ, pawns);} else {pawn_pushes::<BL>(moves, occ, pawns);}
         if self.enp > 0 {en_passants(moves, pawns, self.enp, side)}
         pawn_captures(moves, pawns, opps, side);
