@@ -1,7 +1,7 @@
 // macro for calculating tables
 macro_rules! init {
-    ($init:stmt, $idx:expr, $func:expr) => {{
-        let mut res = [0; 64];
+    ($init:stmt, $idx:expr, $initial:expr, $func:expr) => {{
+        let mut res = [$initial; 64];
         $init
         while $idx < 64 {
             res[$idx] = $func;
@@ -50,7 +50,7 @@ pub const B1C1D1: u64 = 14;
 pub const F1G1: u64 = 96;
 pub const B8C8D8: u64 = 0x0E00000000000000;
 pub const F8G8: u64 = 0x6000000000000000;
-pub const CR: [u8; 64] = init!(let mut idx = 0, idx, match idx {0 => 7, 4 => 3, 7 => 11, 56 => 13, 60 => 12, 63 => 14, _ => 15,});
+pub const CR: [u8; 64] = init!(let mut idx = 0, idx, 0, match idx {0 => 7, 4 => 3, 7 => 11, 56 => 13, 60 => 12, 63 => 14, _ => 15,});
 
 // attacks
 pub const MSB: u64 = 0x80_00_00_00_00_00_00_00;
@@ -65,17 +65,17 @@ pub const FILE: u64 = 0x0101_0101_0101_0101;
 pub const NOTH: u64 = !(FILE << 7);
 
 // rook attacks on rank
-pub const WEST: [u64; 64] = init!(let mut idx = 0, idx, ((1 << idx) - 1) & (0xFF << (idx & 56)));
-pub const EAST: [u64; 64] = init!(let mut idx = 0, idx, (1 << idx) ^ WEST[idx] ^ (0xFF << (idx & 56)));
+pub const WEST: [u64; 64] = init!(let mut idx = 0, idx, 0, ((1 << idx) - 1) & (0xFF << (idx & 56)));
+pub const EAST: [u64; 64] = init!(let mut idx = 0, idx, 0, (1 << idx) ^ WEST[idx] ^ (0xFF << (idx & 56)));
 
 // pawn attacks
 pub const PATT: [[u64; 64]; 2] = [
-    init!(let mut idx = 0, idx, (((1 << idx) & !FILE) << 7) | (((1 << idx) & NOTH) << 9)),
-    init!(let mut idx = 0, idx, (((1 << idx) & !FILE) >> 9) | (((1 << idx) & NOTH) >> 7)),
+    init!(let mut idx = 0, idx, 0, (((1 << idx) & !FILE) << 7) | (((1 << idx) & NOTH) << 9)),
+    init!(let mut idx = 0, idx, 0, (((1 << idx) & !FILE) >> 9) | (((1 << idx) & NOTH) >> 7)),
 ];
 
 // knight attacks
-pub const NATT: [u64; 64] = init!(let mut idx = 0, idx, {
+pub const NATT: [u64; 64] = init!(let mut idx = 0, idx, 0, {
     let n = 1 << idx;
     let h1 = ((n >> 1) & 0x7f7f7f7f7f7f7f7f) | ((n << 1) & 0xfefefefefefefefe);
     let h2 = ((n >> 2) & 0x3f3f3f3f3f3f3f3f) | ((n << 2) & 0xfcfcfcfcfcfcfcfc);
@@ -83,7 +83,7 @@ pub const NATT: [u64; 64] = init!(let mut idx = 0, idx, {
 });
 
 // king attacks
-pub const KATT: [u64; 64] = init!(let mut idx = 0, idx, {
+pub const KATT: [u64; 64] = init!(let mut idx = 0, idx, 0, {
     let mut k = 1 << idx;
     k |= (k << 8) | (k >> 8);
     k |= ((k & !FILE) >> 1) | ((k & NOTH) << 1);
@@ -106,22 +106,7 @@ pub const DIAGS: [u64; 15] = [
     0x0000008040201008, 0x0000000080402010, 0x0000000000804020, 0x0000000000008040, 0x0000000000000080,
 ];
 
-// antidiagonals
-pub const ANTIS: [u64; 15] = [
-    0x0000000000000001, 0x0000000000000102, 0x0000000000010204, 0x0000000001020408, 0x0000000102040810,
-    0x0000010204081020, 0x0001020408102040, 0x0102040810204080, 0x0204081020408000, 0x0408102040800000,
-    0x0810204080000000, 0x1020408000000000, 0x2040800000000000, 0x4080000000000000, 0x8000000000000000,
-];
-
-pub static MASKS: [Mask; 64] = {
-    let mut masks: [Mask; 64] = [Mask { bit: 0, diag: 0, anti: 0, file: 0} ; 64];
-    let mut idx: usize = 0;
-    while idx < 64 {
-        masks[idx].bit  = 1 << idx;
-        masks[idx].diag = 1 << idx ^ DIAGS[(7 + (idx & 7) - (idx >> 3))];
-        masks[idx].anti = 1 << idx ^ ANTIS[(    (idx & 7) + (idx >> 3))];
-        masks[idx].file = 1 << idx ^ FILE << (idx & 7);
-        idx += 1;
-    }
-    masks
-};
+pub const MASKS: [Mask; 64] = init!(let mut idx = 0, idx, Mask { bit: 0, diag: 0, anti: 0, file: 0 }, {
+    let bit = 1 << idx;
+    Mask { bit, diag: bit ^ DIAGS[(7 + (idx & 7) - (idx >> 3))], anti: bit ^ DIAGS[((idx & 7) + (idx >> 3))].swap_bytes(), file: bit ^ FILE << (idx & 7) }
+});
