@@ -71,9 +71,9 @@ impl Pos {
 
     #[inline(always)]
     pub fn get_pc(&self, bit: u64) -> usize {
-        ((self.bb[N] | self.bb[R] | self.bb[K]) & bit > 0) as usize
-        | (2 * ((self.bb[P] | self.bb[N] | self.bb[Q] | self.bb[K]) & bit > 0) as usize)
-        | (4 * ((self.bb[B] | self.bb[R] | self.bb[Q] | self.bb[K]) & bit > 0) as usize)
+               usize::from((self.bb[N] | self.bb[R]             ) & bit > 0)
+        | (2 * usize::from((self.bb[N] | self.bb[P] | self.bb[Q]) & bit > 0))
+        | (4 * usize::from((self.bb[B] | self.bb[R] | self.bb[Q]) & bit > 0))
     }
 
     pub fn do_move(&mut self, m: Move) -> bool {
