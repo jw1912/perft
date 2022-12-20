@@ -20,7 +20,7 @@ macro_rules! c_enum {
 // pieces, sides and moveflags
 pub const E: usize = 0;
 c_enum!(usize, 0, WH, BL, P, N, B, R, Q, K);
-c_enum!(u8, 0, QUIET, DBL, KS, QS, CAP, ENP, PROMO, BPROMO, RPROMO, QPROMO, PROMO_CAP, BPROMO_CAP, RPROMO_CAP, QPROMO_CAP);
+c_enum!(u8, 0, QUIET, DBL, KS, QS, CAP, ENP, E1, E2, PROMO, BPROMO, RPROMO, QPROMO, PROMO_CAP, BPROMO_CAP, RPROMO_CAP, QPROMO_CAP);
 
 // castling
 pub const WQS: u8 = 8;
