@@ -18,6 +18,8 @@ pub struct Move {
 
 #[inline(always)]
 pub fn batt(idx: usize, occ: u64) -> u64 {
+    // disclaimer: in BMASKS, m.file = m.bit.swap_bytes(), as the file mask isn't needed
+    // hyperbola quintessence diagonal attacks
     let m: Mask = BMASKS[idx];
     let mut f: u64 = occ & m.right;
     let mut r: u64 = f.swap_bytes();
@@ -25,17 +27,20 @@ pub fn batt(idx: usize, occ: u64) -> u64 {
     r -= m.file;
     f ^= r.swap_bytes();
     f &= m.right;
+    // hyperbola quintessence antidiagonal attacks
     let mut f2: u64 = occ & m.left;
     r = f2.swap_bytes();
     f2 -= m.bit;
     r -= m.file;
     f2 ^= r.swap_bytes();
     f2 &= m.left;
+
     f | f2
 }
 
 #[inline(always)]
 pub fn ratt(idx: usize, occ: u64) -> u64 {
+    // hyperbola quintessence file attacks
     let m: Mask = RMASKS[idx];
     let mut f: u64 = occ & m.file;
     let mut r: u64 = f.swap_bytes();
@@ -43,12 +48,13 @@ pub fn ratt(idx: usize, occ: u64) -> u64 {
     r -= m.bit.swap_bytes();
     f ^= r.swap_bytes();
     f &= m.file;
-    let mut e: u64 = m.right;
-    let mut sq: usize = ((e & occ) | 0x8000000000000000).trailing_zeros() as usize;
-    e ^= EAST[sq];
-    let mut w: u64 = m.left;
-    sq = (((w & occ)| 1).leading_zeros() ^ 63) as usize;
-    w ^= WEST[sq];
+    // subtracting a rook from a blocking piece eastward attacks
+    let mut e: u64 = m.right & occ;
+    r = e & e.wrapping_neg();
+    e = (r ^ (r - m.bit)) & m.right;
+    // classical westward attacks
+    let w: u64 = m.left ^ WEST[(((m.left & occ)| 1).leading_zeros() ^ 63) as usize];
+
     f | e | w
 }
 
