@@ -1,5 +1,5 @@
 # perft
-A simple, but fast, chess perft program, written in Rust.
+A fast chess perft program, written in Rust. Check out the [quad-bitboard branch](../../tree/feat/qbb)
 
 #### Compiling
 Run ```cargo build --release``` if you have cargo installed.
