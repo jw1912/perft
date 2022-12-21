@@ -78,15 +78,20 @@ pub const DIAGS: [u64; 15] = [
 ];
 
 // masks for hyperbola quintessence rook and bishop attacks
-pub const MASKS: [Mask; 64] = init!(let mut idx = 0, idx, Mask { bit: 0, diag: 0, anti: 0, file: 0 }, {
+pub const BMASKS: [Mask; 64] = init!(let mut idx = 0, idx, Mask { bit: 0, right: 0, left: 0, file: 0 }, {
     let bit = 1 << idx;
-    Mask { bit, diag: bit ^ DIAGS[(7 + (idx & 7) - (idx >> 3))], anti: bit ^ DIAGS[((idx & 7) + (idx >> 3))].swap_bytes(), file: bit ^ FILE << (idx & 7) }
+    Mask { bit, right: bit ^ DIAGS[(7 + (idx & 7) - (idx >> 3))], left: bit ^ DIAGS[((idx & 7) + (idx >> 3))].swap_bytes(), file: bit.swap_bytes() }
+});
+
+pub const RMASKS: [Mask; 64] = init!(let mut idx = 0, idx, Mask { bit: 0, right: 0, left: 0, file: 0 }, {
+    let bit = 1 << idx;
+    Mask { bit, right: EAST[idx], left: WEST[idx], file: bit ^ FILE << (idx & 7) }
 });
 
 #[derive(Clone, Copy)]
 pub struct Mask {
     pub bit: u64,
-    pub diag: u64,
-    pub anti: u64,
+    pub right: u64,
+    pub left: u64,
     pub file: u64,
 }
