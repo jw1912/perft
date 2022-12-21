@@ -95,8 +95,8 @@ impl Pos {
 
         // en passant and castling rights
         self.enp = 0;
-        if cpc == R { self.cr &= CR[m.to as usize] }
-        if mpc == R || mpc == K { self.cr &= CR[m.from as usize] }
+        self.cr &= CR[m.to as usize];
+        self.cr &= CR[m.from as usize];
 
         // updating board
         self.toggle(side, mpc, f | t);
