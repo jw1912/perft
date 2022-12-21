@@ -46,7 +46,6 @@ pub const NOTH: u64 = !(FILE << 7);
 
 // rook attacks on rank
 pub const WEST: [u64; 64] = init!(let mut idx = 0, idx, 0, ((1 << idx) - 1) & (0xFF << (idx & 56)));
-pub const EAST: [u64; 64] = init!(let mut idx = 0, idx, 0, (1 << idx) ^ WEST[idx] ^ (0xFF << (idx & 56)));
 
 // pawn attacks
 pub const PATT: [[u64; 64]; 2] = [
@@ -85,7 +84,8 @@ pub const BMASKS: [Mask; 64] = init!(let mut idx = 0, idx, Mask { bit: 0, right:
 
 pub const RMASKS: [Mask; 64] = init!(let mut idx = 0, idx, Mask { bit: 0, right: 0, left: 0, file: 0 }, {
     let bit = 1 << idx;
-    Mask { bit, right: EAST[idx], left: WEST[idx], file: bit ^ FILE << (idx & 7) }
+    let left = (bit - 1) & (0xFF << (idx & 56));
+    Mask { bit, right: bit ^ left ^ (0xFF << (idx & 56)), left, file: bit ^ FILE << (idx & 7) }
 });
 
 #[derive(Clone, Copy)]

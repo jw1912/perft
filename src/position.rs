@@ -88,12 +88,10 @@ impl Pos {
         let t: u64 = 1 << m.to;
         let mpc: usize = m.mpc as usize;
         let cpc: usize = if m.flag & CAP == 0 || m.flag == ENP {E} else {self.get_pc(t)};
-
-        // flipping side to move
         let side: usize = usize::from(self.c);
-        self.c = !self.c;
 
-        // en passant and castling rights
+        // updating state
+        self.c = !self.c;
         self.enp = 0;
         self.cr &= CR[m.to as usize];
         self.cr &= CR[m.from as usize];
@@ -105,7 +103,7 @@ impl Pos {
             DBL => self.enp = if side == WH {m.to - 8} else {m.to + 8},
             KS => self.toggle(side, R, CKM[side]),
             QS => self.toggle(side, R, CQM[side]),
-            ENP => self.toggle(side ^ 1, P, if side == BL {t << 8} else {t >> 8}),
+            ENP => self.toggle(side ^ 1, P, 1 << (m.to + [8u8.wrapping_neg(), 8u8][side])),
             PROMO.. => {
                 self.bb[mpc] ^= t;
                 self.bb[((m.flag & 3) + 3) as usize] ^= t;
