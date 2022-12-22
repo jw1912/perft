@@ -1,4 +1,4 @@
-use super::{*, position::{ratt, batt}};
+use super::{consts::*, position::{Pos, Move, ratt, batt}};
 
 macro_rules! pop_lsb {($idx:expr, $x:expr) => {$idx = $x.trailing_zeros() as u8; $x &= $x - 1}}
 

@@ -14,13 +14,13 @@ macro_rules! init {
 // macro creates a set of constants similar to in a C enum, but with a strict type and starts at a given value
 macro_rules! c_enum {
     ($type:ty, $val:expr, $name:ident) => {pub const $name: $type = $val;};
-    ($type:ty, $val:expr, $name:ident, $($b:tt),*) => {pub const $name: $type = $val; c_enum!($type, $val + 1, $($b),*);}
+    ($type:ty, $val:expr, $name:ident, $($b:tt),*) => {pub const $name: $type = $val; c_enum!($type, $val + 1, $($b),*);};
 }
 
 // pieces, sides and moveflags
 pub const E: usize = 0;
 c_enum!(usize, 0, WH, BL, P, N, B, R, Q, K);
-c_enum!(u8, 0, QUIET, DBL, KS, QS, CAP, ENP, E1, E2, PROMO, BPROMO, RPROMO, QPROMO, PROMO_CAP, BPROMO_CAP, RPROMO_CAP, QPROMO_CAP);
+c_enum!(u8, 0, QUIET, DBL, KS, QS, CAP, ENP, _E1, _E2, PROMO, BPROMO, RPROMO, QPROMO, PROMO_CAP, BPROMO_CAP, RPROMO_CAP, QPROMO_CAP);
 
 // castling
 pub const WQS: u8 = 0b1000;

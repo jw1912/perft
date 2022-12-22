@@ -2,9 +2,9 @@ mod consts;
 mod position;
 mod movegen;
 
-pub use position::{Move, Pos};
-pub use movegen::MoveList;
-pub use consts::*;
+use consts::*;
+use position::Pos;
+use movegen::MoveList;
 use std::time::{Instant, Duration};
 
 const POSITIONS: [(&str, u8, u64); 5] = [

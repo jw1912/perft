@@ -1,4 +1,4 @@
-use super::*;
+use super::consts::*;
 
 #[derive(Copy, Clone)]
 pub struct Pos {
@@ -18,6 +18,7 @@ pub struct Move {
 
 #[inline(always)]
 pub fn batt(idx: usize, occ: u64) -> u64 {
+    // this gets automatically vectorised when targeting avx or better
     // disclaimer: in BMASKS, m.file = m.bit.swap_bytes(), as the file mask isn't needed
     // hyperbola quintessence diagonal attacks
     let m: Mask = BMASKS[idx];
@@ -86,7 +87,6 @@ impl Pos {
         // extracting move info
         let f: u64 = 1 << m.from;
         let t: u64 = 1 << m.to;
-        let mpc: usize = m.mpc as usize;
         let cpc: usize = if m.flag & CAP == 0 || m.flag == ENP {E} else {self.get_pc(t)};
         let side: usize = usize::from(self.c);
 
@@ -97,7 +97,7 @@ impl Pos {
         self.cr &= CR[m.from as usize];
 
         // updating board
-        self.toggle(side, mpc, f | t);
+        self.toggle(side, usize::from(m.mpc), f | t);
         if cpc != E { self.toggle(side ^ 1, cpc, t) }
         match m.flag {
             DBL => self.enp = if side == WH {m.to - 8} else {m.to + 8},
@@ -106,7 +106,7 @@ impl Pos {
             ENP => self.toggle(side ^ 1, P, 1 << (m.to + [8u8.wrapping_neg(), 8u8][side])),
             PROMO.. => {
                 self.bb[P] ^= t;
-                self.bb[((m.flag & 3) + 3) as usize] ^= t;
+                self.bb[((m.flag & 3) + 1) as usize] ^= t;
             }
             _ => {}
         }
