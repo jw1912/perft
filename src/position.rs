@@ -106,7 +106,7 @@ impl Pos {
             ENP => self.toggle(side ^ 1, P, 1 << (m.to + [8u8.wrapping_neg(), 8u8][side])),
             PROMO.. => {
                 self.bb[P] ^= t;
-                self.bb[((m.flag & 3) + 1) as usize] ^= t;
+                self.bb[((m.flag & 3) + 3) as usize] ^= t;
             }
             _ => {}
         }
