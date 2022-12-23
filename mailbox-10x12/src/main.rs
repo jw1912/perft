@@ -1,6 +1,8 @@
+mod consts;
 mod position;
 mod movegen;
 
+use consts::*;
 use position::Position;
 use movegen::MoveList;
 use std::time::{Instant, Duration};
@@ -44,7 +46,7 @@ fn perft(pos: &Position, depth_left: u8) -> u64 {
 }
 
 fn parse_fen(fen: &str) -> Position {
-    let mut pos: Position = Position { board: [0; 128], c: false, enp: 0, cr: 0 };
+    let mut pos: Position = Position { board: [0xF; 120], c: false, enp: 0, cr: 0 };
     let vec: Vec<&str> = fen.split_whitespace().collect();
     let p: Vec<char> = vec[0].chars().collect();
     let (mut row, mut col): (i16, i16) = (7, 0);
@@ -52,8 +54,9 @@ fn parse_fen(fen: &str) -> Position {
         if ch == '/' { row -= 1; col = 0; }
         else if ('1'..='8').contains(&ch) { col += ch.to_string().parse::<i16>().unwrap_or(0) }
         else {
-            let idx: usize = ['P','N','B','R','Q','K','p','n','b','r','q','k'].iter().position(|&element| element == ch).unwrap_or(6);
-            pos.toggle((idx > 5) as usize, idx + 2 - 6 * ((idx > 5) as usize), 1 << (8 * row + col));
+            let val: usize = [' ','P','N','B','R','Q','K',' ',' ','p','n','b','r','q','k'].iter().position(|&element| element == ch).unwrap_or(6);
+            let idx_64: u16 = (8 * row + col) as u16;
+            pos.set_square(idx_64, val as u8);
             col += 1;
         }
     }
@@ -61,7 +64,7 @@ fn parse_fen(fen: &str) -> Position {
     for ch in vec[2].chars() {pos.cr |= match ch {'Q' => WQS, 'K' => WKS, 'q' => BQS, 'k' => BKS, _ => 0}}
     pos.enp = if vec[3] == "-" {0} else {
         let chs: Vec<char> = vec[3].chars().collect();
-        8 * chs[1].to_string().parse::<u8>().unwrap_or(0) + chs[0] as u8 - 105
+        8 * chs[1].to_string().parse::<u16>().unwrap_or(0) + chs[0] as u16 - 105
     };
     pos
 }
