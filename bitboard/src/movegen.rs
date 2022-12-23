@@ -51,19 +51,11 @@ impl Position {
     fn castles(&self, moves: &mut MoveList, occ: u64) {
         let r: u8 = self.cr;
         if self.c {
-            if r & BQS > 0 && occ & B8C8D8 == 0 && !self.is_sq_att(59, BL, occ) {
-                moves.push(60, 58, QS, K as u8);
-            }
-            if r & BKS > 0 && occ & F8G8 == 0 && !self.is_sq_att(61, BL, occ) {
-                moves.push(60, 62, KS, K as u8);
-            }
+            if r & BQS > 0 && occ & B8C8D8 == 0 && !self.is_sq_att(59, BL, occ) {moves.push(60, 58, QS, K as u8)}
+            if r & BKS > 0 && occ & F8G8 == 0 && !self.is_sq_att(61, BL, occ) {moves.push(60, 62, KS, K as u8)}
         } else {
-            if r & WQS > 0 && occ & B1C1D1 == 0 && !self.is_sq_att(3, WH, occ) {
-                moves.push(4, 2, QS, K as u8);
-            }
-            if r & WKS > 0 && occ & F1G1 == 0 && !self.is_sq_att(5, WH, occ) {
-                moves.push(4, 6, KS, K as u8);
-            }
+            if r & WQS > 0 && occ & B1C1D1 == 0 && !self.is_sq_att(3, WH, occ) {moves.push(4, 2, QS, K as u8)}
+            if r & WKS > 0 && occ & F1G1 == 0 && !self.is_sq_att(5, WH, occ) {moves.push(4, 6, KS, K as u8)}
         }
     }
 }
