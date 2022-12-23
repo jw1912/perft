@@ -1,21 +1,17 @@
-# perft
-A fast chess perft program, written in Rust.
+# Quad-Bitboards
 
-#### Quad-Bitboards
-This is the quad bitboard branch, where instead of as 8 bitboards the board is stored as 4 bitboards in a single simd vector (u64x4).
+#### Board-Representation
+The board is stored as 4 bitboards in a single simd vector (u64x4).
 Pieces are stored vertically, with one bit in each of the four boards, each piece type having its own nibble encoding.
 
-In its current state this implementation is around 5% slower than the equivalent standard bitboard approach, but only with ```target-cpu=native``` on a modern processor - compiling both implementations without targeting avx2, etc sees it fall further behind. Unfortunately, quad bitboards are also not particularly versatile, so likely aren't suitable for an actual engine (where copy-make becomes an issue anyway due to the massive ramp up in memory traffic from hash tables and the like).
+```
+ H8                    A1
+ |                     |
+|1|1111111 ... 0000000|0| - 1 if piece is black
+|1|0011001 ... 1000000|1| - 1 if rook, queen or king
+|0|1110110 ... 0100001|0| - 1 if knight, bishop or king
+|0|0101100 ... 0000000|0| - 1 if pawn, bishop or queen
+```
 
-#### Compiling
-Run ```cargo build --release``` if you have cargo installed.
-
-#### What is perft?
-For any position, perft to a given depth counts the number of leaf nodes in the game tree, achieved by making strictly legal moves.
-
-#### Features
-- No unsafe code
-- Quad-bitboards
-- Pseudo-legal move generation
-- Copy-make
-- Hyperbola quintessence sliding piece attacks
+Using some bitwise instructions it is possible to (relatively) quickly extract the standard 8-bitboard representation
+of the board for use in move generation (and checking for check, to establish move legality).
