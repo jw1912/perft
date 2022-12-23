@@ -1,0 +1,5 @@
+[package]
+name = "quad-bitboard"
+version = "0.1.0"
+edition = "2021"
+authors = ["Jamie Whiting"]
