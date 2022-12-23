@@ -1,5 +1,6 @@
 use crate::consts::*;
 
+#[derive(Clone, Copy)]
 pub struct Position {
     pub board: [u8; 120],
     pub c: bool,
@@ -38,10 +39,18 @@ impl Position {
         match flag {
             QUIET => {},
             DBL => self.enp = if side == WH {to - 8} else {to + 8},
-            KS => {},
-            QS => {},
+            KS => {
+                let (idx1, idx2): (u16, u16) = CKM[side];
+                self.set_square(idx1, E);
+                self.set_square(idx2, R);
+            },
+            CASTLE => {
+                let (idx1, idx2): (u16, u16) = CQM[side];
+                self.set_square(idx1, E);
+                self.set_square(idx2, R);
+            },
             ENP => self.set_square(to + [8u16.wrapping_neg(), 8u16][side], E),
-            PROMO.. => {}
+            PROMO.. => self.set_square(to, (flag as u8 - 1) & 3),
         }
         false
     }
