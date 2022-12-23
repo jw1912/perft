@@ -9,13 +9,13 @@ pub struct Position {
 }
 
 impl Position {
-    /// Gets the piece in a square on the actual board indexed by 0..=63.
+    /// Gets the piece in a square on the actual 8x8 board indexed by 0..=63.
     #[inline(always)]
     pub fn get_square(&self, idx: u16) -> u8 {
         self.board[usize::from(MAILBOX_64[usize::from(idx)])]
     }
 
-    /// Sets the value in a square on the actual board indexed by 0..=63.
+    /// Sets the value in a square on the actual 8x8 board indexed by 0..=63.
     #[inline(always)]
     pub fn set_square(&mut self, idx: u16, val: u8) {
         self.board[usize::from(MAILBOX_64[usize::from(idx)])] = val;
@@ -44,7 +44,7 @@ impl Position {
                 self.set_square(idx1, E);
                 self.set_square(idx2, R);
             },
-            CASTLE => {
+            QS => {
                 let (idx1, idx2): (u16, u16) = CQM[side];
                 self.set_square(idx1, E);
                 self.set_square(idx2, R);

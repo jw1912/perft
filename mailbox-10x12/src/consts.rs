@@ -1,10 +1,10 @@
-// macro creates a set of constants similar to in a C enum, but with a strict type and starts at a given value
+/// Creates a set of constants similar to in a C enum, but with a strict type and starts at a given value.
 macro_rules! c_enum {
     ($type:ty, $val:expr, $name:ident) => {pub const $name: $type = $val;};
     ($type:ty, $val:expr, $name:ident, $($b:tt),*) => {pub const $name: $type = $val; c_enum!($type, $val + 1, $($b),*);}
 }
 
-// pieces, sides and moveflags
+// Pieces, sides and moveflags.
 c_enum!(usize, 0, WH, BL);
 c_enum!(u8, 0, E, P, N, B, R, Q, K);
 c_enum!(u16, 0, QUIET, DBL, KS, QS, ENP, PROMO, BPROMO, RPROMO, QPROMO);
@@ -40,7 +40,7 @@ pub const MAILBOX_120: [u8; 120] = [
     XX, XX, XX, XX, XX, XX, XX, XX, XX, XX,
 ];
 
-// castling
+// Castling.
 pub const WQS: u8 = 0b1000;
 pub const WKS: u8 = 0b0100;
 pub const BQS: u8 = 0b0010;
