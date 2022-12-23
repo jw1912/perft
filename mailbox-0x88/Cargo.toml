@@ -1,0 +1,5 @@
+[package]
+name = "mailbox-0x88"
+version = "0.1.0"
+edition = "2021"
+authors = ["Jamie Whiting"]

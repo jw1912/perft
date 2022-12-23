@@ -3,7 +3,7 @@ mod position;
 mod movegen;
 
 use consts::*;
-use position::Pos;
+use position::Position;
 use movegen::MoveList;
 use std::time::{Instant, Duration};
 
@@ -19,7 +19,7 @@ fn main() {
     let initial: Instant = Instant::now();
     let mut total: u64 = 0;
     for (fen, d, exp) in POSITIONS {
-        let pos: Pos = parse_fen(fen);
+        let pos: Position = parse_fen(fen);
         println!("Position: {fen}");
         let now: Instant = Instant::now();
         let count: u64 = perft(&pos, d);
@@ -32,9 +32,9 @@ fn main() {
     println!("total time {} nodes {} nps {:.3}", dur.as_millis(), total, total as f64 / dur.as_micros() as f64)
 }
 
-fn perft(pos: &Pos, depth_left: u8) -> u64 {
+fn perft(pos: &Position, depth_left: u8) -> u64 {
     let mut moves: MoveList = MoveList::default();
-    let mut tmp: Pos;
+    let mut tmp: Position;
     let mut positions: u64 = 0;
     pos.gen(&mut moves);
     for m_idx in 0..moves.len {
@@ -45,8 +45,8 @@ fn perft(pos: &Pos, depth_left: u8) -> u64 {
     positions
 }
 
-fn parse_fen(fen: &str) -> Pos {
-    let mut pos: Pos = Pos { bb: [0; 8], c: false, enp: 0, cr: 0 };
+fn parse_fen(fen: &str) -> Position {
+    let mut pos: Position = Position { bb: [0; 8], c: false, enp: 0, cr: 0 };
     let vec: Vec<&str> = fen.split_whitespace().collect();
     let p: Vec<char> = vec[0].chars().collect();
     let (mut row, mut col): (i16, i16) = (7, 0);

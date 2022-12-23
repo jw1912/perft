@@ -1,5 +1,5 @@
 [workspace]
-members = ["bitboard", "quad-bitboard"]
+members = ["mailbox-0x88", "bitboard", "quad-bitboard"]
 
 [profile.release]
 panic = 'abort'

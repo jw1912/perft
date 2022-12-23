@@ -1,7 +1,7 @@
 use super::consts::*;
 
 #[derive(Copy, Clone)]
-pub struct Pos {
+pub struct Position {
     pub bb: [u64; 8],
     pub c: bool,
     pub enp: u8,
@@ -59,7 +59,7 @@ pub fn ratt(idx: usize, occ: u64) -> u64 {
     f | e | w
 }
 
-impl Pos {
+impl Position {
     #[inline(always)]
     pub fn toggle(&mut self, c: usize, pc: usize, bit: u64) {
         self.bb[pc] ^= bit;

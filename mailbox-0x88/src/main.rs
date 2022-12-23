@@ -1,15 +1,8 @@
-#![feature(portable_simd)]
-
-mod consts;
 mod position;
 mod movegen;
 
-pub use std::simd::u64x4;
-pub type Qbb = u64x4;
-
-pub use position::{Move, Position};
-pub use movegen::{ExtPos, MoveList, is_sq_att};
-pub use consts::*;
+use position::Position;
+use movegen::MoveList;
 use std::time::{Instant, Duration};
 
 const POSITIONS: [(&str, u8, u64); 5] = [
@@ -29,9 +22,9 @@ fn main() {
         let now: Instant = Instant::now();
         let count: u64 = perft(&pos, d);
         total += count;
+        assert_eq!(count, exp);
         let dur: Duration = now.elapsed();
         println!("depth {} time {} nodes {count} Mnps {:.2}\n", d, dur.as_millis(), count as f64 / dur.as_micros() as f64);
-        assert_eq!(count, exp);
     }
     let dur: Duration = initial.elapsed();
     println!("total time {} nodes {} nps {:.3}", dur.as_millis(), total, total as f64 / dur.as_micros() as f64)
@@ -51,7 +44,7 @@ fn perft(pos: &Position, depth_left: u8) -> u64 {
 }
 
 fn parse_fen(fen: &str) -> Position {
-    let mut pos: Position = Position { qbb: Qbb::splat(0), c: false, enp: 0, cr: 0 };
+    let mut pos: Position = Position { board: [0; 128], c: false, enp: 0, cr: 0 };
     let vec: Vec<&str> = fen.split_whitespace().collect();
     let p: Vec<char> = vec[0].chars().collect();
     let (mut row, mut col): (i16, i16) = (7, 0);
@@ -60,9 +53,7 @@ fn parse_fen(fen: &str) -> Position {
         else if ('1'..='8').contains(&ch) { col += ch.to_string().parse::<i16>().unwrap_or(0) }
         else {
             let idx: usize = ['P','N','B','R','Q','K','p','n','b','r','q','k'].iter().position(|&element| element == ch).unwrap_or(6);
-            let c: u64 = u64::from(idx > 5);
-            let pc: u64 = 1 + idx as u64 - 6 * u64::from(idx > 5);
-            pos.qbb ^= Qbb::from_array([c, (pc >> 2) & 1, (pc >> 1) & 1, pc & 1]) << Qbb::splat((8 * row + col) as u64);
+            pos.toggle((idx > 5) as usize, idx + 2 - 6 * ((idx > 5) as usize), 1 << (8 * row + col));
             col += 1;
         }
     }

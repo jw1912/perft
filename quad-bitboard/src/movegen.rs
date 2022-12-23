@@ -5,7 +5,7 @@ macro_rules! pop_lsb {($idx:expr, $x:expr) => {$idx = $x.trailing_zeros() as u8;
 pub struct ExtPos {occ: u64, pub f: u64, o: u64, p: u64, n: u64, b: u64, r: u64, q: u64, pub k: u64}
 
 impl ExtPos {
-    pub fn new(p: &Pos, side: usize) -> Self {
+    pub fn new(p: &Position, side: usize) -> Self {
         let occ: u64 = p.qbb[1] | p.qbb[2] | p.qbb[3];
         let sides: [u64; 2] = [occ ^ p.qbb[0], p.qbb[0]];
         let odd: u64 = p.qbb[1] ^ p.qbb[2] ^ p.qbb[3];
@@ -50,7 +50,7 @@ fn encode<const PC: u8>(moves: &mut MoveList, mut attacks: u64, from: u8) {
     }
 }
 
-impl Pos {
+impl Position {
     pub fn gen(&self, moves: &mut MoveList) {
         // extracting qbb info
         let side: usize = usize::from(self.c);

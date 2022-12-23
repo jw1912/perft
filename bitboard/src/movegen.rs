@@ -1,4 +1,4 @@
-use super::{consts::*, position::{Pos, Move, ratt, batt}};
+use super::{consts::*, position::{Position, Move, ratt, batt}};
 
 macro_rules! pop_lsb {($idx:expr, $x:expr) => {$idx = $x.trailing_zeros() as u8; $x &= $x - 1}}
 
@@ -29,7 +29,7 @@ fn encode<const PC: usize, const FLAG: u8>(moves: &mut MoveList, mut attacks: u6
     }
 }
 
-impl Pos {
+impl Position {
     pub fn gen(&self, moves: &mut MoveList) {
         let side: usize = usize::from(self.c);
         let occ: u64 = self.bb[0] | self.bb[1];

@@ -7,5 +7,9 @@ name = "bitboard"
 version = "0.1.0"
 
 [[package]]
+name = "mailbox-0x88"
+version = "0.1.0"
+
+[[package]]
 name = "quad-bitboard"
 version = "0.1.0"

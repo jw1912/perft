@@ -1,7 +1,7 @@
 use super::*;
 
 #[derive(Copy, Clone)]
-pub struct Pos {
+pub struct Position {
     pub qbb: Qbb,
     pub c: bool,
     pub enp: u8,
@@ -58,7 +58,7 @@ pub fn ratt(idx: usize, occ: u64) -> u64 {
     f | e | w
 }
 
-impl Pos {
+impl Position {
     pub fn do_move(&mut self, m: Move) -> bool {
         // extracting move info
         let f: Qbb = Qbb::splat(u64::from(m.from));
