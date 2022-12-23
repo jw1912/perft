@@ -14,7 +14,21 @@ Run ```cargo build --release```, if you have cargo installed, to compile all bin
 Perft is a simple test to see if move generation and making/unmaking moves works correctly.
 For any position, perft to a given depth counts the number of leaf nodes in the game tree, achieved by making strictly legal moves to that depth.
 
+#### Board Representation
+Fullmove and halfmove counters are not included in the board representation, as they are not needed for perft.
+```rust
+pub struct Position {
+    board: ...,    // the 8x8 board, this is what is different between representations
+    c: bool,       // side to move
+    enp: u8,       // en passant square, 0 if none
+    cr: u8,        // castling rights
+}
+```
+
 ## Consistency
+
+#### State
+En-passant squares, castling rights, and the side to move are handled identically in all implementations.
 
 #### Move Generation
 All move generation is pseudo-legal, and moves are checked for legality after they are made, being undone if they are illegal.
