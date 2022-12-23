@@ -1,6 +1,6 @@
 # Mailbox-10x12
 
-**Not implemented yet.**
+***Implementation not finished yet.***
 
 #### Board Representation
 The board is an array of 120 squares, representing a 10x12 board that contains the actual 8x8
