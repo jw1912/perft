@@ -27,7 +27,6 @@ impl Position {
         let to: u16 = m & 63;
         let flag: u16 = m >> 12;
         let mpc: u8 = self.get_square(from);
-        let cpc: u8 = self.get_square(to);
         let side: usize = usize::from(self.c);
 
         // updating board

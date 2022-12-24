@@ -5,8 +5,8 @@ macro_rules! c_enum {
 }
 
 // Pieces, sides and moveflags.
-c_enum!(usize, 0, WH, BL);
-c_enum!(u8, 0, E, P, N, B, R, Q, K);
+c_enum!(usize, 0, WH, _BL);
+c_enum!(u8, 0, E, P, _N, _B, R, _Q, _K);
 c_enum!(u16, 0, QUIET, DBL, KS, QS, ENP, PROMO, BPROMO, RPROMO, QPROMO);
 
 // Conversion 8x8 array indices to 10x12 indices.
@@ -58,3 +58,21 @@ pub const CR: [u8; 64] = [
     15, 15, 15, 15, 15, 15, 15, 15,
     13, 15, 15, 15, 12, 15, 15, 14,
 ];
+
+pub const OFFSETS: [[i16; 8]; 7] = [
+    [   0,   0,  0,  0, 0,  0,  0,  0 ],
+	[   0,   0,  0,  0, 0,  0,  0,  0 ],
+	[ -21, -19,-12, -8, 8, 12, 19, 21 ],
+	[ -11,  -9,  9, 11, 0,  0,  0,  0 ],
+	[ -10,  -1,  1, 10, 0,  0,  0,  0 ],
+	[ -11, -10, -9, -1, 1,  9, 10, 11 ],
+	[ -11, -10, -9, -1, 1,  9, 10, 11 ],
+];
+
+pub const NON_SLIDER: [bool; 7] = [true, true, true, false, false, false, true];
+
+pub const DOUBLE_RANKS: [u8; 2] = [1, 6];
+pub const PROMO_RANKS: [u8; 2] = [6, 1];
+
+pub const PAWN_CAPS: [[i16; 2]; 2] = [[9, 11], [-11, -9]];
+pub const PUSH: [i16; 2] = [10, -10];

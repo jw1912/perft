@@ -46,16 +46,20 @@ fn perft(pos: &Position, depth_left: u8) -> u64 {
 }
 
 fn parse_fen(fen: &str) -> Position {
-    let mut pos: Position = Position { board: [0xF; 120], c: false, enp: 0, cr: 0 };
+    let mut pos: Position = Position { board: [XX; 120], c: false, enp: 0, cr: 0 };
     let vec: Vec<&str> = fen.split_whitespace().collect();
     let p: Vec<char> = vec[0].chars().collect();
-    let (mut row, mut col): (i16, i16) = (7, 0);
+    let (mut row, mut col): (i16, u16) = (7, 0);
     for ch in p {
         if ch == '/' { row -= 1; col = 0; }
-        else if ('1'..='8').contains(&ch) { col += ch.to_string().parse::<i16>().unwrap_or(0) }
-        else {
+        else if ('1'..='8').contains(&ch) {
+            let empties: u16 = ch.to_string().parse::<u16>().unwrap_or(0);
+            let idx_64: u16 = 8 * row as u16 + col;
+            col += empties;
+            for i in 0..empties {pos.set_square(idx_64 + i, E)}
+        } else {
             let val: usize = [' ','P','N','B','R','Q','K',' ',' ','p','n','b','r','q','k'].iter().position(|&element| element == ch).unwrap_or(6);
-            let idx_64: u16 = (8 * row + col) as u16;
+            let idx_64: u16 = 8 * row as u16 + col;
             pos.set_square(idx_64, val as u8);
             col += 1;
         }
