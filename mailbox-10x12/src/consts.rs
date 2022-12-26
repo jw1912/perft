@@ -22,7 +22,7 @@ pub const MAILBOX_64: [u8; 64] = [
 ];
 
 // Off board index.
-pub const XX: u8 = 64;
+pub const XX: u8 = 0xFF;
 
 // Conversion 10x12 array indices to 8x8 indices.
 pub const MAILBOX_120: [u8; 120] = [

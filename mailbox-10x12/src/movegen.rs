@@ -90,8 +90,27 @@ impl Position {
         }
     }
 
-
     fn gen_promos(&self, moves: &mut MoveList, sq_120: u8, side: u8, f: u16) {
-
+        let stm: usize = usize::from(self.c);
+        for attack in PAWN_CAPS[stm] {
+            let to: usize = (sq_120 as i16 + attack) as usize;
+            let target: u8 = self.board[to];
+            if target == XX || target == E {continue}
+            else if colour(target) != side {
+                let m: u16 = f | MAILBOX_120[to] as u16;
+                moves.push(m | QPROMO << 12);
+                moves.push(m | PROMO  << 12);
+                moves.push(m | BPROMO << 12);
+                moves.push(m | RPROMO << 12);
+            }
+        }
+        let to: usize = (sq_120 as i16 + PUSH[stm]) as usize;
+        if self.board[to] == E {
+            let m: u16 = f | MAILBOX_120[to] as u16;
+            moves.push(m | QPROMO << 12);
+            moves.push(m | PROMO  << 12);
+            moves.push(m | BPROMO << 12);
+            moves.push(m | RPROMO << 12);
+        }
     }
 }
