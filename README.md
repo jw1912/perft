@@ -5,16 +5,18 @@ The aim of the code is to remain as simple as possible whilst not sacrificing to
 All the implementations are self-contained and require no dependencies; see the individual READMEs for
 how each implementation works.
 
-#### Compiling
-Run ```cargo build --release```, if you have cargo installed, to compile all binaries.
-
-**Note:** Quad-bitboard requires rust nightly, as it uses the portable_simd feature.
-
-#### What is perft?
+### What is perft?
 Perft is a simple test to see if move generation and making/unmaking moves works correctly.
 For any position, perft to a given depth counts the number of leaf nodes in the game tree, achieved by making strictly legal moves to that depth.
 
-#### Board Representation
+## Compiling
+Run ```cargo build --release```, if you have cargo installed, to compile all binaries.
+
+**Note:** ```quad-bitboard``` requires rust nightly, as it uses the portable_simd feature.
+
+## Board Representation
+
+### General Layout
 Fullmove and halfmove counters are not included in the board representation, as they are not needed for perft.
 ```rust
 pub struct Position {
@@ -25,17 +27,30 @@ pub struct Position {
 }
 ```
 
+### Piece-Centric vs Square-Centric
+#### Piece-Centric
+- [```bitboards```](/bitboard)
+- piece-lists
+- piece-sets
+#### Square-Centric
+- mailbox
+    + 0x88
+    + 8x8
+    + general padded (e.g. [```10x12```](/mailbox-10x12))
+#### Mix
+- [```quad-bitboards```](/quad-bitboard)
+
+
+
 ## Consistency
 
-#### State
+### State
 En-passant squares, castling rights, and the side to move are handled identically in all implementations.
 
-#### Move Generation
+### Move Generation
 All move generation is pseudo-legal, and moves are checked for legality after they are made, being undone if they are illegal.
 As a result no "tricks" are used to inflate NPS.
 
-In the case of bitboards vs quad-bitboards, the move generation is identical.
-
-#### Copy/make vs Make/unmake
+### Copy/make vs Make/unmake
 Whichever is faster will be used, with copy/make preferred due to its simplicity if the margin is close. In an actual engine make/unmake is usually
 better because of the added memory pressure of everything else in search, but in perft copy/make is often faster.
