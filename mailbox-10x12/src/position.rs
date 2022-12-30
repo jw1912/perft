@@ -106,7 +106,7 @@ impl Position {
                 self.set_square(idx2, ROOK[side]);
             },
             ENP => self.set_square(to + [8u16.wrapping_neg(), 8u16][side], E),
-            PROMO.. => self.set_square(to, flag as u8 - 3),
+            PROMO.. => self.set_square(to, (flag as u8 - 3) | (side as u8) << 3),
         }
 
         self.is_square_attacked(self.kings[side], side)
