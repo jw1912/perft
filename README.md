@@ -52,5 +52,4 @@ All move generation is pseudo-legal, and moves are checked for legality after th
 As a result no "tricks" are used to inflate NPS.
 
 ### Copy/make vs Make/unmake
-Whichever is faster will be used, with copy/make preferred due to its simplicity if the margin is close. In an actual engine make/unmake is usually
-better because of the added memory pressure of everything else in search, but in perft copy/make is often faster.
+Copy/make is used for simplicity (and it is usually faster for perft).

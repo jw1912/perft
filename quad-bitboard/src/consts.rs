@@ -24,7 +24,7 @@ macro_rules! qbb {($v1:expr, $v2:expr, $v3:expr, $v4:expr) => {Qbb::from_array([
 
 // pieces, sides and moveflags
 c_enum!(usize, 0, WH, BL);
-c_enum!(u8, 0, E, P, N, B, R, Q, K);
+c_enum!(u8, 0, _E, P, N, B, R, Q, K);
 c_enum!(u8, 0, QUIET, DBL, KS, QS, ENP, PROMO, BPROMO, RPROMO, QPROMO);
 
 // castling

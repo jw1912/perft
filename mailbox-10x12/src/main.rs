@@ -1,6 +1,6 @@
 mod consts;
-mod position;
-mod movegen;
+pub mod position;
+pub mod movegen;
 
 use consts::*;
 use position::Position;
@@ -32,7 +32,7 @@ fn main() {
     println!("total time {} nodes {} nps {:.3}", dur.as_millis(), total, total as f64 / dur.as_micros() as f64)
 }
 
-fn perft(pos: &Position, depth_left: u8) -> u64 {
+pub fn perft(pos: &Position, depth_left: u8) -> u64 {
     let mut moves: MoveList = MoveList::default();
     let mut tmp: Position;
     let mut positions: u64 = 0;
@@ -45,7 +45,7 @@ fn perft(pos: &Position, depth_left: u8) -> u64 {
     positions
 }
 
-fn parse_fen(fen: &str) -> Position {
+pub fn parse_fen(fen: &str) -> Position {
     let mut pos: Position = Position { board: [XX; 120], c: false, enp: 0, cr: 0, kings: [64; 2] };
     let vec: Vec<&str> = fen.split_whitespace().collect();
     let p: Vec<char> = vec[0].chars().collect();

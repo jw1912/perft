@@ -35,7 +35,7 @@ impl Default for MoveList {
 }
 impl MoveList {
     #[inline(always)]
-    pub fn push(&mut self, from: u8, to: u8, flag: u8, mpc: u8) {
+    fn push(&mut self, from: u8, to: u8, flag: u8, mpc: u8) {
         self.list[self.len] = Move {from, to, flag, mpc};
         self.len += 1;
     }

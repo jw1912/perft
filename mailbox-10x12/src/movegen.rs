@@ -12,7 +12,7 @@ impl Default for MoveList {
 }
 impl MoveList {
     #[inline(always)]
-    pub fn push(&mut self, m: u16) {
+    fn push(&mut self, m: u16) {
         self.list[self.len] = m;
         self.len += 1;
     }
