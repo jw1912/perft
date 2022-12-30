@@ -1,4 +1,4 @@
-use crate::{position::Position, consts::*};
+use crate::{position::{Position, colour, piece}, consts::*};
 
 pub struct MoveList {
     pub list: [u16; 252],
@@ -18,16 +18,6 @@ impl MoveList {
     }
 }
 
-#[inline]
-fn colour(pc: u8) -> u8 {
-    pc & 8
-}
-
-#[inline]
-fn piece(pc: u8) -> u8 {
-    pc & 7
-}
-
 impl Position {
     pub fn gen(&self, moves: &mut MoveList) {
         let side: u8 = u8::from(self.c) << 3;
@@ -44,6 +34,9 @@ impl Position {
                 } else {self.gen_piece(moves, sq_120, pc_type, side, f)}
             }
         }
+        let s = usize::from(self.c);
+        if self.cr & CS[s] > 0 && !self.is_square_attacked(4 + 56 * self.c as u8, s) {self.castles(moves)}
+        if self.enp > 0 {self.en_passants(moves, s)}
     }
 
     fn gen_piece(&self, moves: &mut MoveList, sq_120: u8, pc_type: u8, side: u8, f: u16) {
@@ -111,6 +104,26 @@ impl Position {
             moves.push(m | PROMO  << 12);
             moves.push(m | BPROMO << 12);
             moves.push(m | RPROMO << 12);
+        }
+    }
+
+    fn castles(&self, moves: &mut MoveList) {
+        let r: u8 = self.cr;
+        if self.c {
+            if r & BQS > 0 && self.board[92] == E && self.board[93] == E && self.board[94] == E && !self.is_square_attacked(59, BL) {moves.push(60 << 6 | 58 | QS << 12)}
+            if r & BKS > 0 && self.board[96] == E && self.board[97] == E && !self.is_square_attacked(61, BL) {moves.push(60 << 6 | 62 | KS << 12)}
+        } else {
+            if r & WQS > 0 && self.board[22] == E && self.board[23] == E && self.board[24] == E && !self.is_square_attacked(3, WH) {moves.push(4 << 6 | 2 | QS << 12)}
+            if r & WKS > 0 && self.board[26] == E && self.board[27] == E && !self.is_square_attacked(5, WH) {moves.push(4 << 6 | 6 | KS << 12)}
+        }
+    }
+
+    fn en_passants(&self, moves: &mut MoveList, s: usize) {
+        let enp_120 = MAILBOX_64[self.enp as usize];
+        for att in PAWN_CAPS[s ^ 1] {
+            let to = ((enp_120 as i16) + att) as u16;
+            let target = self.board[to as usize];
+            if colour(target) == (s as u8) << 3 && piece(target) == P {moves.push(to << 6 | self.enp | ENP << 12)}
         }
     }
 }

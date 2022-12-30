@@ -6,6 +6,18 @@ pub struct Position {
     pub c: bool,
     pub enp: u16,
     pub cr: u8,
+    pub kings: [u8; 2],
+}
+
+
+#[inline]
+pub fn colour(pc: u8) -> u8 {
+    pc & 8
+}
+
+#[inline]
+pub fn piece(pc: u8) -> u8 {
+    pc & 7
 }
 
 impl Position {
@@ -19,6 +31,50 @@ impl Position {
     #[inline(always)]
     pub fn set_square(&mut self, idx: u16, val: u8) {
         self.board[usize::from(MAILBOX_64[usize::from(idx)])] = val;
+    }
+
+    pub fn is_square_attacked(&self, sq_64: u8, side: usize) -> bool {
+        let sq_120 = usize::from(MAILBOX_64[sq_64 as usize]);
+        let opp = ((side ^ 1) as u8) << 3;
+        for att in PAWN_CAPS[side] {
+            let pc = self.board[((sq_120 as i16) + att) as usize];
+            if colour(pc) == opp && piece(pc) == P {return true}
+        }
+        for i in 0..4 {
+            let att = OFFSETS[N as usize][i];
+            let pc = self.board[((sq_120 as i16) + att) as usize];
+            if colour(pc) == opp && piece(pc) == N {return true}
+        }
+        for i in 0..8 {
+            let att = OFFSETS[K as usize][i];
+            let pc = self.board[((sq_120 as i16) + att) as usize];
+            if colour(pc) == opp && piece(pc) == K {return true}
+        }
+        for i in 0..4 {
+            let dir = OFFSETS[B as usize][i];
+            let mut to: i16 = dir + sq_120 as i16;
+            'dir: loop {
+                let target: u8 = self.board[to as usize];
+                if target != E {
+                    if colour(target) == opp  && (piece(target) == Q || piece(target) == B) {return true}
+                    break 'dir
+                }
+                to += dir;
+            }
+        }
+        for i in 0..4 {
+            let dir = OFFSETS[R as usize][i];
+            let mut to: i16 = dir + sq_120 as i16;
+            'dir: loop {
+                let target: u8 = self.board[to as usize];
+                if target != E {
+                    if colour(target) == opp  && (piece(target) == Q || piece(target) == R) {return true}
+                    break 'dir
+                }
+                to += dir;
+            }
+        }
+        false
     }
 
     pub fn do_move(&mut self, m: u16) -> bool {
@@ -35,6 +91,7 @@ impl Position {
         self.cr &= CR[usize::from(to)] & CR[usize::from(from)];
         self.set_square(from, E);
         self.set_square(to, mpc);
+        if piece(mpc) == K {self.kings[side] = to as u8}
         match flag {
             QUIET => {},
             DBL => self.enp = if side == WH {to - 8} else {to + 8},
@@ -51,6 +108,7 @@ impl Position {
             ENP => self.set_square(to + [8u16.wrapping_neg(), 8u16][side], E),
             PROMO.. => self.set_square(to, (flag as u8 - 1) & 3),
         }
-        false
+
+        self.is_square_attacked(self.kings[side], side)
     }
 }

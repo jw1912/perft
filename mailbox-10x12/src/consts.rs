@@ -5,8 +5,8 @@ macro_rules! c_enum {
 }
 
 // Pieces, sides and moveflags.
-c_enum!(usize, 0, WH, _BL);
-c_enum!(u8, 0, E, P, _N, _B, R, _Q, _K);
+c_enum!(usize, 0, WH, BL);
+c_enum!(u8, 0, E, P, N, B, R, Q, K);
 c_enum!(u16, 0, QUIET, DBL, KS, QS, ENP, PROMO, BPROMO, RPROMO, QPROMO);
 
 // Conversion 8x8 array indices to 10x12 indices.

@@ -16,6 +16,11 @@ const POSITIONS: [(&str, u8, u64); 5] = [
 ];
 
 fn main() {
+    for d in 0..=6 {
+        let pos: Position = parse_fen(POSITIONS[0].0);
+        let count: u64 = perft(&pos, d);
+        println!("depth {d} nodes {count}\n");
+    }
     let initial: Instant = Instant::now();
     let mut total: u64 = 0;
     for (fen, d, exp) in POSITIONS {
@@ -46,7 +51,7 @@ fn perft(pos: &Position, depth_left: u8) -> u64 {
 }
 
 fn parse_fen(fen: &str) -> Position {
-    let mut pos: Position = Position { board: [XX; 120], c: false, enp: 0, cr: 0 };
+    let mut pos: Position = Position { board: [XX; 120], c: false, enp: 0, cr: 0, kings: [64; 2] };
     let vec: Vec<&str> = fen.split_whitespace().collect();
     let p: Vec<char> = vec[0].chars().collect();
     let (mut row, mut col): (i16, u16) = (7, 0);
@@ -61,6 +66,7 @@ fn parse_fen(fen: &str) -> Position {
             let val: usize = [' ','P','N','B','R','Q','K',' ',' ','p','n','b','r','q','k'].iter().position(|&element| element == ch).unwrap_or(6);
             let idx_64: u16 = 8 * row as u16 + col;
             pos.set_square(idx_64, val as u8);
+            if val == 6 {pos.kings[0] = idx_64 as u8} else if val == 14 {pos.kings[1] = idx_64 as u8}
             col += 1;
         }
     }
