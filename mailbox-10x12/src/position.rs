@@ -40,7 +40,7 @@ impl Position {
             let pc = self.board[((sq_120 as i16) + att) as usize];
             if colour(pc) == opp && piece(pc) == P {return true}
         }
-        for i in 0..4 {
+        for i in 0..8 {
             let att = OFFSETS[N as usize][i];
             let pc = self.board[((sq_120 as i16) + att) as usize];
             if colour(pc) == opp && piece(pc) == N {return true}

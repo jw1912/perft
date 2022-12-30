@@ -121,9 +121,9 @@ impl Position {
     fn en_passants(&self, moves: &mut MoveList, s: usize) {
         let enp_120 = MAILBOX_64[self.enp as usize];
         for att in PAWN_CAPS[s ^ 1] {
-            let to = ((enp_120 as i16) + att) as u16;
-            let target = self.board[to as usize];
-            if colour(target) == (s as u8) << 3 && piece(target) == P {moves.push(to << 6 | self.enp | ENP << 12)}
+            let from = ((enp_120 as i16) + att) as u16;
+            let target = self.board[from as usize];
+            if piece(target) == P && colour(target) == (s as u8) << 3 {moves.push((MAILBOX_120[from as usize] as u16) << 6 | self.enp | ENP << 12)}
         }
     }
 }

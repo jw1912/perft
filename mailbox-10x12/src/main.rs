@@ -16,11 +16,6 @@ const POSITIONS: [(&str, u8, u64); 5] = [
 ];
 
 fn main() {
-    for d in 0..=6 {
-        let pos: Position = parse_fen(POSITIONS[0].0);
-        let count: u64 = perft(&pos, d);
-        println!("depth {d} nodes {count}\n");
-    }
     let initial: Instant = Instant::now();
     let mut total: u64 = 0;
     for (fen, d, exp) in POSITIONS {
@@ -29,12 +24,18 @@ fn main() {
         let now: Instant = Instant::now();
         let count: u64 = perft(&pos, d);
         total += count;
-        assert_eq!(count, exp);
         let dur: Duration = now.elapsed();
         println!("depth {} time {} nodes {count} Mnps {:.2}\n", d, dur.as_millis(), count as f64 / dur.as_micros() as f64);
+        assert_eq!(count, exp);
     }
     let dur: Duration = initial.elapsed();
     println!("total time {} nodes {} nps {:.3}", dur.as_millis(), total, total as f64 / dur.as_micros() as f64)
+}
+
+macro_rules! idx_to_sq {($idx:expr) => {format!("{}{}", char::from_u32(($idx & 7) as u32 + 97).unwrap(), ($idx >> 3) + 1)}}
+fn u16_to_uci(m: u16) -> String {
+    let promo: &str = if m & 0b1000_0000_0000_0000 > 0 {["n","b","r","q"][((m >> 12) & 0b11) as usize]} else {""};
+    format!("{}{}{} ", idx_to_sq!((m >> 6) & 63), idx_to_sq!(m & 63), promo)
 }
 
 fn perft(pos: &Position, depth_left: u8) -> u64 {
@@ -44,8 +45,11 @@ fn perft(pos: &Position, depth_left: u8) -> u64 {
     pos.gen(&mut moves);
     for m_idx in 0..moves.len {
         tmp = *pos;
-        if tmp.do_move(moves.list[m_idx]) { continue }
-        positions += if depth_left > 1 {perft(&tmp, depth_left - 1)} else {1};
+        let m = moves.list[m_idx];
+        if tmp.do_move(m) { continue }
+        let count = if depth_left > 1 {perft(&tmp, depth_left - 1)} else {1};
+        positions += count;
+        //if depth_left == D {println!("{:016b} {}: {}", m, u16_to_uci(m), count)}
     }
     positions
 }
