@@ -35,8 +35,7 @@ pub struct Position {
 #### Square-Centric
 - mailbox
     + 0x88
-    + 8x8
-    + general padded (e.g. [```10x12```](/mailbox-10x12))
+    + padded (e.g. [```10x12```](/mailbox-10x12))
 #### Mix
 - [```quad-bitboards```](/quad-bitboard)
 
