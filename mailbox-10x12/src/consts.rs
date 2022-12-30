@@ -9,6 +9,8 @@ c_enum!(usize, 0, WH, BL);
 c_enum!(u8, 0, E, P, N, B, R, Q, K);
 c_enum!(u16, 0, QUIET, DBL, KS, QS, ENP, PROMO, BPROMO, RPROMO, QPROMO);
 
+pub const ROOK: [u8; 2] = [4, 12];
+
 // Conversion 8x8 array indices to 10x12 indices.
 pub const MAILBOX_64: [u8; 64] = [
     21, 22, 23, 24, 25, 26, 27, 28,
