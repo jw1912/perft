@@ -1,4 +1,4 @@
-/// Macro for calculating tables (until const fn pointers are stable).
+// Macro for calculating tables (until const fn pointers are stable).
 macro_rules! init {
     ($idx:ident, $init:expr, $($rest:tt)+) => {{
         let mut res = [$init; 64];

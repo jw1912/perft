@@ -33,10 +33,9 @@ fn main() {
 }
 
 pub fn perft(pos: &Position, depth_left: u8) -> u64 {
-    let mut moves: MoveList = MoveList::default();
     let mut tmp: Position;
     let mut positions: u64 = 0;
-    pos.gen(&mut moves);
+    let moves: MoveList = pos.gen();
     for m_idx in 0..moves.len {
         tmp = *pos;
         if tmp.do_move(moves.list[m_idx]) { continue }

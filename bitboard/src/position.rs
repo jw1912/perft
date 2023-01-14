@@ -78,7 +78,7 @@ impl Position {
 
     #[inline(always)]
     pub fn get_pc(&self, bit: u64) -> usize {
-               usize::from((self.bb[N] | self.bb[R]             ) & bit > 0)
+        usize::from((self.bb[N] | self.bb[R]) & bit > 0)
         | (2 * usize::from((self.bb[N] | self.bb[P] | self.bb[Q]) & bit > 0))
         | (4 * usize::from((self.bb[B] | self.bb[R] | self.bb[Q]) & bit > 0))
     }
