@@ -52,24 +52,24 @@ impl Position {
         }
         for i in 0..4 {
             let dir = OFFSETS[B as usize][i];
-            let mut to: i16 = dir + sq_120 as i16;
-            'dir: loop {
-                let target: u8 = self.board[to as usize];
+            let mut to = dir + sq_120 as i16;
+            loop {
+                let target = self.board[to as usize];
                 if target != E {
                     if colour(target) == opp  && (piece(target) == Q || piece(target) == B) {return true}
-                    break 'dir
+                    break
                 }
                 to += dir;
             }
         }
         for i in 0..4 {
             let dir = OFFSETS[R as usize][i];
-            let mut to: i16 = dir + sq_120 as i16;
-            'dir: loop {
-                let target: u8 = self.board[to as usize];
+            let mut to = dir + sq_120 as i16;
+            loop {
+                let target = self.board[to as usize];
                 if target != E {
                     if colour(target) == opp  && (piece(target) == Q || piece(target) == R) {return true}
-                    break 'dir
+                    break
                 }
                 to += dir;
             }
@@ -79,11 +79,11 @@ impl Position {
 
     pub fn do_move(&mut self, m: u16) -> bool {
         // getting move info
-        let from: u16 = (m >> 6) & 63;
-        let to: u16 = m & 63;
-        let flag: u16 = m >> 12;
-        let mpc: u8 = self.get_square(from);
-        let side: usize = usize::from(self.c);
+        let from = (m >> 6) & 63;
+        let to = m & 63;
+        let flag = m >> 12;
+        let mpc = self.get_square(from);
+        let side = usize::from(self.c);
 
         // updating board
         self.c = !self.c;
@@ -95,13 +95,8 @@ impl Position {
         match flag {
             QUIET => {},
             DBL => self.enp = if side == WH {to - 8} else {to + 8},
-            KS => {
-                let (idx1, idx2): (u16, u16) = CKM[side];
-                self.set_square(idx1, E);
-                self.set_square(idx2, ROOK[side]);
-            },
-            QS => {
-                let (idx1, idx2): (u16, u16) = CQM[side];
+            KS | QS => {
+                let (idx1, idx2) = CM[usize::from(flag == KS)][side];
                 self.set_square(idx1, E);
                 self.set_square(idx2, ROOK[side]);
             },

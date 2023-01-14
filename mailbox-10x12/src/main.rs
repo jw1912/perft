@@ -5,7 +5,7 @@ pub mod movegen;
 use consts::*;
 use position::Position;
 use movegen::MoveList;
-use std::time::{Instant, Duration};
+use std::time::Instant;
 
 const POSITIONS: [(&str, u8, u64); 5] = [
     ("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 6, 119_060_324),
@@ -16,26 +16,26 @@ const POSITIONS: [(&str, u8, u64); 5] = [
 ];
 
 fn main() {
-    let initial: Instant = Instant::now();
-    let mut total: u64 = 0;
+    let initial = Instant::now();
+    let mut total = 0;
     for (fen, d, exp) in POSITIONS {
-        let pos: Position = parse_fen(fen);
+        let pos = parse_fen(fen);
         println!("Position: {fen}");
-        let now: Instant = Instant::now();
-        let count: u64 = perft(&pos, d);
+        let now = Instant::now();
+        let count = perft(&pos, d);
         total += count;
-        let dur: Duration = now.elapsed();
+        let dur = now.elapsed();
         println!("depth {} time {} nodes {count} Mnps {:.2}\n", d, dur.as_millis(), count as f64 / dur.as_micros() as f64);
         assert_eq!(count, exp);
     }
-    let dur: Duration = initial.elapsed();
+    let dur = initial.elapsed();
     println!("total time {} nodes {} nps {:.3}", dur.as_millis(), total, total as f64 / dur.as_micros() as f64)
 }
 
 pub fn perft(pos: &Position, depth_left: u8) -> u64 {
-    let mut moves: MoveList = MoveList::default();
+    let mut moves = MoveList::default();
     let mut tmp: Position;
-    let mut positions: u64 = 0;
+    let mut positions = 0;
     pos.gen(&mut moves);
     for m_idx in 0..moves.len {
         tmp = *pos;
@@ -46,20 +46,20 @@ pub fn perft(pos: &Position, depth_left: u8) -> u64 {
 }
 
 pub fn parse_fen(fen: &str) -> Position {
-    let mut pos: Position = Position { board: [XX; 120], c: false, enp: 0, cr: 0, kings: [64; 2] };
+    let mut pos = Position { board: [XX; 120], c: false, enp: 0, cr: 0, kings: [64; 2] };
     let vec: Vec<&str> = fen.split_whitespace().collect();
     let p: Vec<char> = vec[0].chars().collect();
-    let (mut row, mut col): (i16, u16) = (7, 0);
+    let (mut row, mut col) = (7, 0);
     for ch in p {
         if ch == '/' { row -= 1; col = 0; }
         else if ('1'..='8').contains(&ch) {
-            let empties: u16 = ch.to_string().parse::<u16>().unwrap_or(0);
-            let idx_64: u16 = 8 * row as u16 + col;
+            let empties = ch.to_string().parse::<u16>().unwrap_or(0);
+            let idx_64 = 8 * row as u16 + col;
             col += empties;
             for i in 0..empties {pos.set_square(idx_64 + i, E)}
         } else {
-            let val: usize = [' ','P','N','B','R','Q','K',' ',' ','p','n','b','r','q','k'].iter().position(|&element| element == ch).unwrap_or(6);
-            let idx_64: u16 = 8 * row as u16 + col;
+            let val = [' ','P','N','B','R','Q','K',' ',' ','p','n','b','r','q','k'].iter().position(|&element| element == ch).unwrap_or(6);
+            let idx_64 = 8 * row as u16 + col;
             pos.set_square(idx_64, val as u8);
             if val == 6 {pos.kings[0] = idx_64 as u8} else if val == 14 {pos.kings[1] = idx_64 as u8}
             col += 1;

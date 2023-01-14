@@ -48,8 +48,7 @@ pub const WKS: u8 = 0b0100;
 pub const BQS: u8 = 0b0010;
 pub const BKS: u8 = 0b0001;
 pub const CS: [u8; 2] = [WKS | WQS, BKS | BQS];
-pub const CQM: [(u16, u16); 2] = [(0, 3), (56, 59)];
-pub const CKM: [(u16, u16); 2] = [(7, 5), (63, 61)];
+pub const CM: [[(u16, u16); 2]; 2] = [[(0, 3), (56, 59)], [(7, 5), (63, 61)]];
 pub const CR: [u8; 64] = [
      7, 15, 15, 15,  3, 15, 15, 11,
     15, 15, 15, 15, 15, 15, 15, 15,
