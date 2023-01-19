@@ -95,3 +95,22 @@ pub struct Mask {
     pub left: u64,
     pub file: u64,
 }
+
+pub const RANKS: [[u64; 256]; 8] = {
+    let mut ret: [[u64; 256]; 8] = [[0; 256]; 8];
+    let mut file: usize = 0;
+    while file < 8 {
+        let mut occ: u64 = 0;
+        while occ < 256 {
+            let m: Mask = RMASKS[file];
+            let mut e: u64 = m.right & occ;
+            let r: u64 = e & e.wrapping_neg();
+            e = (r ^ (r.wrapping_sub(m.bit))) & m.right;
+            let w: u64 = m.left ^ WEST[(((m.left & occ)| 1).leading_zeros() ^ 63) as usize];
+            ret[file][occ as usize] = e | w;
+            occ += 1;
+        }
+        file += 1;
+    }
+    ret
+};

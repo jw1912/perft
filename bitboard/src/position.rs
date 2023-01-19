@@ -49,14 +49,12 @@ pub fn ratt(idx: usize, occ: u64) -> u64 {
     r -= m.bit.swap_bytes();
     f ^= r.swap_bytes();
     f &= m.file;
-    // subtracting a rook from a blocking piece eastward attacks
-    let mut e: u64 = m.right & occ;
-    r = e & e.wrapping_neg();
-    e = (r ^ (r - m.bit)) & m.right;
-    // classical westward attacks
-    let w: u64 = m.left ^ WEST[(((m.left & occ)| 1).leading_zeros() ^ 63) as usize];
+    // shift-lookup
+    let file: usize = idx & 7;
+    let shift: usize = idx - file;
+    r = RANKS[file][((occ >> shift) & 0xFF) as usize] << shift;
 
-    f | e | w
+    f | r
 }
 
 impl Position {
@@ -93,10 +91,7 @@ impl Position {
         // updating state
         self.c = !self.c;
         self.enp = 0;
-        self.cr &= CR[m.to as usize];
-        self.cr &= CR[m.from as usize];
-
-        // updating board
+        self.cr &= CR[m.to as usize] & CR[m.from as usize];
         self.toggle(side, usize::from(m.mpc), f | t);
         if cpc != E { self.toggle(side ^ 1, cpc, t) }
         match m.flag {
