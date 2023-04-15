@@ -52,7 +52,7 @@ pub fn ratt(idx: usize, occ: u64) -> u64 {
     // shift-lookup
     let file: usize = idx & 7;
     let shift: usize = idx - file;
-    r = RANKS[file][((occ >> shift) & 0xFF) as usize] << shift;
+    r = RANKS[file][((occ >> (shift + 1)) & 0x3F) as usize] << shift;
 
     f | r
 }
