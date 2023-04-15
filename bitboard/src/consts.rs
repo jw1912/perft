@@ -79,7 +79,7 @@ pub const DIAGS: [u64; 15] = [
 // masks for hyperbola quintessence rook and bishop attacks
 pub const BMASKS: [Mask; 64] = init!(idx, Mask { bit: 0, right: 0, left: 0, file: 0 },
     let bit = 1 << idx;
-    Mask { bit, right: bit ^ DIAGS[(7 + (idx & 7) - (idx >> 3))], left: bit ^ DIAGS[((idx & 7) + (idx >> 3))].swap_bytes(), file: bit.swap_bytes() }
+    Mask { bit, right: bit ^ DIAGS[7 + (idx & 7) - (idx >> 3)], left: bit ^ DIAGS[(idx & 7) + (idx >> 3)].swap_bytes(), file: bit.swap_bytes() }
 );
 
 pub const RMASKS: [Mask; 64] = init!(idx, Mask { bit: 0, right: 0, left: 0, file: 0 },
