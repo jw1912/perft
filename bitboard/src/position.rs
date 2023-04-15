@@ -96,8 +96,7 @@ impl Position {
         if cpc != E { self.toggle(side ^ 1, cpc, t) }
         match m.flag {
             DBL => self.enp = if side == WH {m.to - 8} else {m.to + 8},
-            KS => self.toggle(side, R, CKM[side]),
-            QS => self.toggle(side, R, CQM[side]),
+            KS | QS => self.toggle(side, R, CM[usize::from(m.flag == KS)][side]),
             ENP => self.toggle(side ^ 1, P, 1 << (m.to + [8u8.wrapping_neg(), 8u8][side])),
             PROMO.. => {
                 self.bb[P] ^= t;
