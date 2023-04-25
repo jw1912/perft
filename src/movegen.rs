@@ -13,6 +13,17 @@ impl MoveList {
         self.list[self.len] = Move {from, to, flag, mpc};
         self.len += 1;
     }
+
+    #[inline(always)]
+    fn uninit() -> Self {
+        Self {
+            list: unsafe {
+                #[allow(clippy::uninit_assumed_init, invalid_value)]
+                std::mem::MaybeUninit::uninit().assume_init()
+            },
+            len: 0,
+        }
+    }
 }
 
 #[inline(always)]
@@ -26,21 +37,21 @@ fn encode<const PC: usize, const FLAG: u8>(moves: &mut MoveList, mut attacks: u6
 
 impl Position {
     pub fn gen(&self) -> MoveList {
-        let mut moves: MoveList = MoveList { list: [Move::default(); 252], len: 0 };
-        let side: usize = usize::from(self.c);
-        let occ: u64 = self.bb[0] | self.bb[1];
-        let friends: u64 = self.bb[side];
-        let opps: u64 = self.bb[side ^ 1];
-        let pawns: u64 = self.bb[P] & friends;
+        let mut moves = MoveList::uninit();
+        let side = usize::from(self.c);
+        let occ = self.bb[0] | self.bb[1];
+        let friends = self.bb[side];
+        let opps = self.bb[side ^ 1];
+        let pawns = self.bb[P] & friends;
         if self.cr & CS[side] > 0 && !self.is_sq_att(4 + 56 * (side == BL) as usize, side, occ) {self.castles(&mut moves, occ)}
         if side == WH {pawn_pushes::<WH>(&mut moves, occ, pawns);} else {pawn_pushes::<BL>(&mut moves, occ, pawns);}
         if self.enp > 0 {en_passants(&mut moves, pawns, self.enp, side)}
         pawn_captures(&mut moves, pawns, opps, side);
-        pc_moves::<N>(&mut moves, occ, friends, opps, self.bb[N]);
-        pc_moves::<B>(&mut moves, occ, friends, opps, self.bb[B]);
-        pc_moves::<R>(&mut moves, occ, friends, opps, self.bb[R]);
-        pc_moves::<Q>(&mut moves, occ, friends, opps, self.bb[Q]);
-        pc_moves::<K>(&mut moves, occ, friends, opps, self.bb[K]);
+        pc_moves::<N>(&mut moves, occ, opps, friends & self.bb[N]);
+        pc_moves::<B>(&mut moves, occ, opps, friends & self.bb[B]);
+        pc_moves::<R>(&mut moves, occ, opps, friends & self.bb[R]);
+        pc_moves::<Q>(&mut moves, occ, opps, friends & self.bb[Q]);
+        pc_moves::<K>(&mut moves, occ, opps, friends & self.bb[K]);
         moves
     }
 
@@ -57,10 +68,9 @@ impl Position {
 }
 
 #[inline(always)]
-fn pc_moves<const PC: usize>(moves: &mut MoveList, occ: u64, friends: u64, opps: u64, mut attackers: u64) {
-    let mut from: u8;
-    let mut attacks: u64;
-    attackers &= friends;
+fn pc_moves<const PC: usize>(moves: &mut MoveList, occ: u64, opps: u64, mut attackers: u64) {
+    let mut from;
+    let mut attacks;
     while attackers > 0 {
         pop_lsb!(from, attackers);
         attacks = match PC {
@@ -78,8 +88,8 @@ fn pc_moves<const PC: usize>(moves: &mut MoveList, occ: u64, friends: u64, opps:
 
 #[inline(always)]
 fn pawn_captures(moves: &mut MoveList, mut attackers: u64, opps: u64, c: usize) {
-    let (mut from, mut to, mut attacks): (u8, u8, u64);
-    let mut promo_attackers: u64 = attackers & PENRANK[c];
+    let (mut from, mut to, mut attacks);
+    let mut promo_attackers = attackers & PENRANK[c];
     attackers &= !PENRANK[c];
     while attackers > 0 {
         pop_lsb!(from, attackers);
@@ -101,8 +111,8 @@ fn pawn_captures(moves: &mut MoveList, mut attackers: u64, opps: u64, c: usize) 
 
 #[inline(always)]
 fn en_passants(moves: &mut MoveList, pawns: u64, sq: u8, c: usize) {
-    let mut attackers: u64 = PATT[c ^ 1][sq as usize] & pawns;
-    let mut from: u8;
+    let mut attackers = PATT[c ^ 1][sq as usize] & pawns;
+    let mut from;
     while attackers > 0 {
         pop_lsb!(from, attackers);
         moves.push(from, sq, ENP, P as u8);
@@ -119,19 +129,19 @@ fn idx_shift<const SIDE: usize, const AMOUNT: u8>(idx: u8) -> u8 {
 
 #[inline(always)]
 fn pawn_pushes<const SIDE: usize>(moves: &mut MoveList, occupied: u64, pawns: u64) {
-    let empty: u64 = !occupied;
-    let mut pushable_pawns: u64 = shift::<SIDE>(empty) & pawns;
-    let mut dbl_pushable_pawns: u64 = shift::<SIDE>(shift::<SIDE>(empty & DBLRANK[SIDE]) & empty) & pawns;
-    let mut promotable_pawns: u64 = pushable_pawns & PENRANK[SIDE];
+    let empty = !occupied;
+    let mut pushable_pawns = shift::<SIDE>(empty) & pawns;
+    let mut dbl_pushable_pawns = shift::<SIDE>(shift::<SIDE>(empty & DBLRANK[SIDE]) & empty) & pawns;
+    let mut promotable_pawns = pushable_pawns & PENRANK[SIDE];
     pushable_pawns &= !PENRANK[SIDE];
-    let mut from: u8;
+    let mut from;
     while pushable_pawns > 0 {
         pop_lsb!(from, pushable_pawns);
         moves.push(from, idx_shift::<SIDE, 8>(from), QUIET, P as u8);
     }
     while promotable_pawns > 0 {
         pop_lsb!(from, promotable_pawns);
-        let to: u8 = idx_shift::<SIDE, 8>(from);
+        let to = idx_shift::<SIDE, 8>(from);
         moves.push(from, to, QPROMO, P as u8);
         moves.push(from, to, PROMO , P as u8);
         moves.push(from, to, BPROMO, P as u8);

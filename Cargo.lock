@@ -3,13 +3,5 @@
 version = 3
 
 [[package]]
-name = "bitboard"
-version = "0.1.0"
-
-[[package]]
-name = "mailbox-10x12"
-version = "0.1.0"
-
-[[package]]
-name = "quad-bitboard"
+name = "perft"
 version = "0.1.0"

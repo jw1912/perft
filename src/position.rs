@@ -21,15 +21,15 @@ pub fn batt(idx: usize, occ: u64) -> u64 {
     // this gets automatically vectorised when targeting avx or better
     // disclaimer: in BMASKS, m.file = m.bit.swap_bytes(), as the file mask isn't needed
     // hyperbola quintessence diagonal attacks
-    let m: Mask = BMASKS[idx];
-    let mut f: u64 = occ & m.right;
-    let mut r: u64 = f.swap_bytes();
+    let m = BMASKS[idx];
+    let mut f = occ & m.right;
+    let mut r = f.swap_bytes();
     f -= m.bit;
     r -= m.file;
     f ^= r.swap_bytes();
     f &= m.right;
     // hyperbola quintessence antidiagonal attacks
-    let mut f2: u64 = occ & m.left;
+    let mut f2 = occ & m.left;
     r = f2.swap_bytes();
     f2 -= m.bit;
     r -= m.file;
@@ -42,16 +42,16 @@ pub fn batt(idx: usize, occ: u64) -> u64 {
 #[inline(always)]
 pub fn ratt(idx: usize, occ: u64) -> u64 {
     // hyperbola quintessence file attacks
-    let m: Mask = RMASKS[idx];
-    let mut f: u64 = occ & m.file;
-    let mut r: u64 = f.swap_bytes();
+    let m = RMASKS[idx];
+    let mut f = occ & m.file;
+    let mut r = f.swap_bytes();
     f -= m.bit;
     r -= m.bit.swap_bytes();
     f ^= r.swap_bytes();
     f &= m.file;
     // shift-lookup
-    let file: usize = idx & 7;
-    let shift: usize = idx - file;
+    let file = idx & 7;
+    let shift = idx - file;
     r = RANKS[file][((occ >> (shift + 1)) & 0x3F) as usize] << shift;
 
     f | r
@@ -66,12 +66,12 @@ impl Position {
 
     #[inline(always)]
     pub fn is_sq_att(&self, idx: usize, side: usize, occ: u64) -> bool {
-        let s: u64 = self.bb[side ^ 1];
-        (NATT[idx] & self.bb[N] & s > 0)
-        || (KATT[idx] & self.bb[K] & s > 0)
-        || (PATT[side][idx] & self.bb[P] & s > 0)
-        || (ratt(idx, occ) & ((self.bb[R] | self.bb[Q]) & s) > 0)
-        || (batt(idx, occ) & ((self.bb[B] | self.bb[Q]) & s) > 0)
+        ( (NATT[idx] & self.bb[N])
+        | (KATT[idx] & self.bb[K])
+        | (PATT[side][idx] & self.bb[P])
+        | (ratt(idx, occ) & (self.bb[R] | self.bb[Q]))
+        | (batt(idx, occ) & (self.bb[B] | self.bb[Q]))
+        ) & self.bb[side ^ 1] > 0
     }
 
     #[inline(always)]
@@ -83,10 +83,10 @@ impl Position {
 
     pub fn do_move(&mut self, m: Move) -> bool {
         // extracting move info
-        let f: u64 = 1 << m.from;
-        let t: u64 = 1 << m.to;
-        let cpc: usize = if m.flag & CAP == 0 || m.flag == ENP {E} else {self.get_pc(t)};
-        let side: usize = usize::from(self.c);
+        let f = 1 << m.from;
+        let t = 1 << m.to;
+        let cpc = if m.flag & CAP == 0 || m.flag == ENP {E} else {self.get_pc(t)};
+        let side = usize::from(self.c);
 
         // updating state
         self.c = !self.c;
@@ -106,7 +106,7 @@ impl Position {
         }
 
         // is move legal?
-        let king_idx: usize = (self.bb[K] & self.bb[side]).trailing_zeros() as usize;
+        let king_idx = (self.bb[K] & self.bb[side]).trailing_zeros() as usize;
         self.is_sq_att(king_idx, side, self.bb[0] | self.bb[1])
     }
 }
