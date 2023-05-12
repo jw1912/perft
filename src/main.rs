@@ -15,15 +15,17 @@ const POSITIONS: [(&str, u8, u64); 5] = [
 ];
 
 fn main() {
-    let initial: Instant = Instant::now();
+    let initial = Instant::now();
     let mut total: u64 = 0;
     for (fen, d, exp) in POSITIONS {
         let pos = parse_fen(fen);
         println!("Position: {fen}");
+
         let now = Instant::now();
         let count = perft(&pos, d);
         total += count;
         assert_eq!(count, exp);
+
         let dur = now.elapsed();
         println!(
             "depth {d} time {} nodes {count} Mnps {:.2}\n",
@@ -31,6 +33,7 @@ fn main() {
             count as f64 / dur.as_micros() as f64
         );
     }
+
     let dur = initial.elapsed();
     println!(
         "total time {} nodes {total} nps {:.3}",

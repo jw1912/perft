@@ -26,6 +26,8 @@ impl MoveList {
     fn uninit() -> Self {
         Self {
             list: unsafe {
+                // dont use this in actual code!
+                // faster and does work, but technically ub
                 #[allow(clippy::uninit_assumed_init, invalid_value)]
                 std::mem::MaybeUninit::uninit().assume_init()
             },
@@ -47,13 +49,15 @@ impl Position {
     pub fn gen(&self) -> MoveList {
         let mut moves = MoveList::uninit();
         let side = usize::from(self.c);
+
+        // reused bitboards
         let occ = self.bb[0] | self.bb[1];
-        let friends = self.bb[side];
+        let boys = self.bb[side];
         let opps = self.bb[side ^ 1];
-        let pawns = self.bb[P] & friends;
+        let pawns = self.bb[P] & boys;
 
         // castling
-        if self.cr & CS[side] > 0 && !self.is_sq_att(4 + 56 * (side == BL) as usize, side, occ) {
+        if self.cr & CS[side] > 0 && !self.is_sq_att(4 + 56 * usize::from(side == BL), side, occ) {
             self.castles(&mut moves, occ)
         }
 
@@ -69,11 +73,11 @@ impl Position {
         pawn_captures(&mut moves, pawns, opps, side);
 
         // other pieces
-        pc_moves::<N>(&mut moves, occ, opps, friends & self.bb[N]);
-        pc_moves::<B>(&mut moves, occ, opps, friends & self.bb[B]);
-        pc_moves::<R>(&mut moves, occ, opps, friends & self.bb[R]);
-        pc_moves::<Q>(&mut moves, occ, opps, friends & self.bb[Q]);
-        pc_moves::<K>(&mut moves, occ, opps, friends & self.bb[K]);
+        pc_moves::<N>(&mut moves, occ, opps, boys & self.bb[N]);
+        pc_moves::<B>(&mut moves, occ, opps, boys & self.bb[B]);
+        pc_moves::<R>(&mut moves, occ, opps, boys & self.bb[R]);
+        pc_moves::<Q>(&mut moves, occ, opps, boys & self.bb[Q]);
+        pc_moves::<K>(&mut moves, occ, opps, boys & self.bb[K]);
 
         moves
     }
@@ -105,11 +109,11 @@ fn pc_moves<const PC: usize>(moves: &mut MoveList, occ: u64, opps: u64, mut atta
     while attackers > 0 {
         pop_lsb!(from, attackers);
         attacks = match PC {
-            N => NATT[from as usize],
-            R => ratt(from as usize, occ),
-            B => batt(from as usize, occ),
-            Q => ratt(from as usize, occ) | batt(from as usize, occ),
-            K => KATT[from as usize],
+            N => NATT[usize::from(from)],
+            R => ratt(usize::from(from), occ),
+            B => batt(usize::from(from), occ),
+            Q => ratt(usize::from(from), occ) | batt(usize::from(from), occ),
+            K => KATT[usize::from(from)],
             _ => 0,
         };
         encode::<PC, CAP>(moves, attacks & opps, from);
@@ -125,13 +129,13 @@ fn pawn_captures(moves: &mut MoveList, mut attackers: u64, opps: u64, c: usize) 
 
     while attackers > 0 {
         pop_lsb!(from, attackers);
-        attacks = PATT[c][from as usize] & opps;
+        attacks = PATT[c][usize::from(from)] & opps;
         encode::<P, CAP>(moves, attacks, from);
     }
 
     while promo_attackers > 0 {
         pop_lsb!(from, promo_attackers);
-        attacks = PATT[c][from as usize] & opps;
+        attacks = PATT[c][usize::from(from)] & opps;
         while attacks > 0 {
             pop_lsb!(to, attacks);
             moves.push(from, to, QPC, P as u8);
@@ -144,7 +148,7 @@ fn pawn_captures(moves: &mut MoveList, mut attackers: u64, opps: u64, c: usize) 
 
 #[inline(always)]
 fn en_passants(moves: &mut MoveList, pawns: u64, sq: u8, c: usize) {
-    let mut attackers = PATT[c ^ 1][sq as usize] & pawns;
+    let mut attackers = PATT[c ^ 1][usize::from(sq)] & pawns;
     let mut from;
     while attackers > 0 {
         pop_lsb!(from, attackers);

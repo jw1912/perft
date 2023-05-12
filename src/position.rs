@@ -69,12 +69,12 @@ impl Position {
     }
 
     #[inline(always)]
-    pub fn is_sq_att(&self, idx: usize, side: usize, occ: u64) -> bool {
-        ( (NATT[idx] & self.bb[N])
-        | (KATT[idx] & self.bb[K])
-        | (PATT[side][idx] & self.bb[P])
-        | (ratt(idx, occ) & (self.bb[R] | self.bb[Q]))
-        | (batt(idx, occ) & (self.bb[B] | self.bb[Q]))
+    pub fn is_sq_att(&self, sq: usize, side: usize, occ: u64) -> bool {
+        ( (NATT[sq] & self.bb[N])
+        | (KATT[sq] & self.bb[K])
+        | (PATT[side][sq] & self.bb[P])
+        | (ratt(sq, occ) & (self.bb[R] | self.bb[Q]))
+        | (batt(sq, occ) & (self.bb[B] | self.bb[Q]))
         ) & self.bb[side ^ 1] > 0
     }
 
@@ -95,7 +95,7 @@ impl Position {
         // updating state
         self.c = !self.c;
         self.enp = 0;
-        self.cr &= CR[m.to as usize] & CR[m.from as usize];
+        self.cr &= CR[usize::from(m.to)] & CR[usize::from(m.from)];
 
         // move piece
         self.toggle(side, usize::from(m.mpc), f | t);
@@ -110,13 +110,13 @@ impl Position {
             ENP => self.toggle(side ^ 1, P, 1 << (m.to.wrapping_add([8u8.wrapping_neg(), 8u8][side]))),
             NPR.. => {
                 self.bb[P] ^= t;
-                self.bb[((m.flag & 3) + 3) as usize] ^= t;
+                self.bb[usize::from((m.flag & 3) + 3)] ^= t;
             }
             _ => {}
         }
 
         // is move legal?
-        let king_idx = (self.bb[K] & self.bb[side]).trailing_zeros() as usize;
-        self.is_sq_att(king_idx, side, self.bb[0] | self.bb[1])
+        let king_sq = (self.bb[K] & self.bb[side]).trailing_zeros();
+        self.is_sq_att(king_sq as usize, side, self.bb[0] | self.bb[1])
     }
 }
