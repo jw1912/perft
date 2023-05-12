@@ -78,10 +78,7 @@ impl File {
     const H: u64 = Self::A << 7;
 }
 
-// rook attacks on rank
 const WEST: [u64; 64] = init! {idx, 0, ((1 << idx) - 1) & (0xFF << (idx & 56))};
-
-// diagonals
 const DIAGS: [u64; 15] = [
     0x0100000000000000,
     0x0201000000000000,
