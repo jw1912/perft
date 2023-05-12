@@ -1,6 +1,7 @@
 use super::{
+    attacks::Attacks,
     consts::*,
-    position::{batt, ratt, Move, Position},
+    position::{Move, Position},
 };
 
 macro_rules! pop_lsb {
@@ -17,8 +18,8 @@ pub struct MoveList {
 
 impl MoveList {
     #[inline(always)]
-    fn push(&mut self, from: u8, to: u8, flag: u8, mpc: u8) {
-        self.list[self.len] = Move { from, to, flag, mpc };
+    fn push(&mut self, from: u8, to: u8, flag: u8, mpc: usize) {
+        self.list[self.len] = Move { from, to, flag, mpc: mpc as u8 };
         self.len += 1;
     }
 
@@ -41,7 +42,7 @@ fn encode<const PC: usize, const FLAG: u8>(moves: &mut MoveList, mut attacks: u6
     let mut to: u8;
     while attacks > 0 {
         pop_lsb!(to, attacks);
-        moves.push(from, to, FLAG, PC as u8);
+        moves.push(from, to, FLAG, PC);
     }
 }
 
@@ -54,18 +55,18 @@ impl Position {
         let occ = self.bb[0] | self.bb[1];
         let boys = self.bb[side];
         let opps = self.bb[side ^ 1];
-        let pawns = self.bb[P] & boys;
+        let pawns = self.bb[Piece::PAWN] & boys;
 
         // castling
-        if self.cr & CS[side] > 0 && !self.is_sq_att(4 + 56 * usize::from(side == BL), side, occ) {
+        if self.cr & CS[side] > 0 && !self.is_sq_att(4 + 56 * usize::from(side == Side::BLACK), side, occ) {
             self.castles(&mut moves, occ)
         }
 
         // pawns
-        if side == WH {
-            pawn_pushes::<WH>(&mut moves, occ, pawns);
+        if side == Side::WHITE {
+            pawn_pushes::<{ Side::WHITE }>(&mut moves, occ, pawns);
         } else {
-            pawn_pushes::<BL>(&mut moves, occ, pawns);
+            pawn_pushes::<{ Side::BLACK }>(&mut moves, occ, pawns);
         }
         if self.enp > 0 {
             en_passants(&mut moves, pawns, self.enp, side)
@@ -73,11 +74,11 @@ impl Position {
         pawn_captures(&mut moves, pawns, opps, side);
 
         // other pieces
-        pc_moves::<N>(&mut moves, occ, opps, boys & self.bb[N]);
-        pc_moves::<B>(&mut moves, occ, opps, boys & self.bb[B]);
-        pc_moves::<R>(&mut moves, occ, opps, boys & self.bb[R]);
-        pc_moves::<Q>(&mut moves, occ, opps, boys & self.bb[Q]);
-        pc_moves::<K>(&mut moves, occ, opps, boys & self.bb[K]);
+        pc_moves::<{ Piece::KNIGHT }>(&mut moves, occ, opps, boys & self.bb[Piece::KNIGHT]);
+        pc_moves::<{ Piece::BISHOP }>(&mut moves, occ, opps, boys & self.bb[Piece::BISHOP]);
+        pc_moves::<{ Piece::ROOK   }>(&mut moves, occ, opps, boys & self.bb[Piece::ROOK  ]);
+        pc_moves::<{ Piece::QUEEN  }>(&mut moves, occ, opps, boys & self.bb[Piece::QUEEN ]);
+        pc_moves::<{ Piece::KING   }>(&mut moves, occ, opps, boys & self.bb[Piece::KING  ]);
 
         moves
     }
@@ -85,18 +86,18 @@ impl Position {
     #[inline(always)]
     fn castles(&self, moves: &mut MoveList, occ: u64) {
         if self.c {
-            if self.cr & BQS > 0 && occ & B8C8D8 == 0 && !self.is_sq_att(59, BL, occ) {
-                moves.push(60, 58, QS, K as u8)
+            if self.cr & BQS > 0 && occ & B8C8D8 == 0 && !self.is_sq_att(59, Side::BLACK, occ) {
+                moves.push(60, 58, MoveFlag::QS, Piece::KING)
             }
-            if self.cr & BKS > 0 && occ & F8G8 == 0 && !self.is_sq_att(61, BL, occ) {
-                moves.push(60, 62, KS, K as u8)
+            if self.cr & BKS > 0 && occ &   F8G8 == 0 && !self.is_sq_att(61, Side::BLACK, occ) {
+                moves.push(60, 62, MoveFlag::KS, Piece::KING)
             }
         } else {
-            if self.cr & WQS > 0 && occ & B1C1D1 == 0 && !self.is_sq_att(3, WH, occ) {
-                moves.push(4, 2, QS, K as u8)
+            if self.cr & WQS > 0 && occ & B1C1D1 == 0 && !self.is_sq_att( 3, Side::WHITE, occ) {
+                moves.push( 4,  2, MoveFlag::QS, Piece::KING)
             }
-            if self.cr & WKS > 0 && occ & F1G1 == 0 && !self.is_sq_att(5, WH, occ) {
-                moves.push(4, 6, KS, K as u8)
+            if self.cr & WKS > 0 && occ &   F1G1 == 0 && !self.is_sq_att( 5, Side::WHITE, occ) {
+                moves.push( 4,  6, MoveFlag::KS, Piece::KING)
             }
         }
     }
@@ -109,15 +110,15 @@ fn pc_moves<const PC: usize>(moves: &mut MoveList, occ: u64, opps: u64, mut atta
     while attackers > 0 {
         pop_lsb!(from, attackers);
         attacks = match PC {
-            N => NATT[usize::from(from)],
-            R => ratt(usize::from(from), occ),
-            B => batt(usize::from(from), occ),
-            Q => ratt(usize::from(from), occ) | batt(usize::from(from), occ),
-            K => KATT[usize::from(from)],
+            Piece::KNIGHT => Attacks::KNIGHT[usize::from(from)],
+            Piece::ROOK   => Attacks::rook(usize::from(from), occ),
+            Piece::BISHOP => Attacks::bishop(usize::from(from), occ),
+            Piece::QUEEN  => Attacks::rook(usize::from(from), occ) | Attacks::bishop(usize::from(from), occ),
+            Piece::KING   => Attacks::KING[usize::from(from)],
             _ => 0,
         };
-        encode::<PC, CAP>(moves, attacks & opps, from);
-        encode::<PC, QUIET>(moves, attacks & !occ, from);
+        encode::<PC, { MoveFlag::CAP   }>(moves, attacks & opps, from);
+        encode::<PC, { MoveFlag::QUIET }>(moves, attacks & !occ, from);
     }
 }
 
@@ -129,35 +130,35 @@ fn pawn_captures(moves: &mut MoveList, mut attackers: u64, opps: u64, c: usize) 
 
     while attackers > 0 {
         pop_lsb!(from, attackers);
-        attacks = PATT[c][usize::from(from)] & opps;
-        encode::<P, CAP>(moves, attacks, from);
+        attacks = Attacks::PAWN[c][usize::from(from)] & opps;
+        encode::<{ Piece::PAWN }, { MoveFlag::CAP }>(moves, attacks, from);
     }
 
     while promo_attackers > 0 {
         pop_lsb!(from, promo_attackers);
-        attacks = PATT[c][usize::from(from)] & opps;
+        attacks = Attacks::PAWN[c][usize::from(from)] & opps;
         while attacks > 0 {
             pop_lsb!(to, attacks);
-            moves.push(from, to, QPC, P as u8);
-            moves.push(from, to, NPC, P as u8);
-            moves.push(from, to, BPC, P as u8);
-            moves.push(from, to, RPC, P as u8);
+            moves.push(from, to, MoveFlag::QPC, Piece::PAWN);
+            moves.push(from, to, MoveFlag::NPC, Piece::PAWN);
+            moves.push(from, to, MoveFlag::BPC, Piece::PAWN);
+            moves.push(from, to, MoveFlag::RPC, Piece::PAWN);
         }
     }
 }
 
 #[inline(always)]
 fn en_passants(moves: &mut MoveList, pawns: u64, sq: u8, c: usize) {
-    let mut attackers = PATT[c ^ 1][usize::from(sq)] & pawns;
+    let mut attackers = Attacks::PAWN[c ^ 1][usize::from(sq)] & pawns;
     let mut from;
     while attackers > 0 {
         pop_lsb!(from, attackers);
-        moves.push(from, sq, ENP, P as u8);
+        moves.push(from, sq, MoveFlag::ENP, Piece::PAWN);
     }
 }
 
 fn shift<const SIDE: usize>(bb: u64) -> u64 {
-    if SIDE == WH {
+    if SIDE == Side::WHITE {
         bb >> 8
     } else {
         bb << 8
@@ -165,7 +166,7 @@ fn shift<const SIDE: usize>(bb: u64) -> u64 {
 }
 
 fn idx_shift<const SIDE: usize, const AMOUNT: u8>(idx: u8) -> u8 {
-    if SIDE == WH {
+    if SIDE == Side::WHITE {
         idx + AMOUNT
     } else {
         idx - AMOUNT
@@ -174,30 +175,31 @@ fn idx_shift<const SIDE: usize, const AMOUNT: u8>(idx: u8) -> u8 {
 
 #[inline(always)]
 fn pawn_pushes<const SIDE: usize>(moves: &mut MoveList, occupied: u64, pawns: u64) {
+    let mut from;
     let empty = !occupied;
+
     let mut pushable_pawns = shift::<SIDE>(empty) & pawns;
-    let mut dbl_pushable_pawns =
-        shift::<SIDE>(shift::<SIDE>(empty & DBLRANK[SIDE]) & empty) & pawns;
     let mut promotable_pawns = pushable_pawns & PENRANK[SIDE];
     pushable_pawns &= !PENRANK[SIDE];
-    let mut from;
-
     while pushable_pawns > 0 {
         pop_lsb!(from, pushable_pawns);
-        moves.push(from, idx_shift::<SIDE, 8>(from), QUIET, P as u8);
+        let to = idx_shift::<SIDE, 8>(from);
+        moves.push(from, to, MoveFlag::QUIET, Piece::PAWN);
     }
 
     while promotable_pawns > 0 {
         pop_lsb!(from, promotable_pawns);
         let to = idx_shift::<SIDE, 8>(from);
-        moves.push(from, to, QPR, P as u8);
-        moves.push(from, to, NPR, P as u8);
-        moves.push(from, to, BPR, P as u8);
-        moves.push(from, to, RPR, P as u8);
+        moves.push(from, to, MoveFlag::QPR, Piece::PAWN);
+        moves.push(from, to, MoveFlag::NPR, Piece::PAWN);
+        moves.push(from, to, MoveFlag::BPR, Piece::PAWN);
+        moves.push(from, to, MoveFlag::RPR, Piece::PAWN);
     }
 
+    let mut dbl_pushable_pawns =
+        shift::<SIDE>(shift::<SIDE>(empty & DBLRANK[SIDE]) & empty) & pawns;
     while dbl_pushable_pawns > 0 {
         pop_lsb!(from, dbl_pushable_pawns);
-        moves.push(from, idx_shift::<SIDE, 16>(from), DBL, P as u8);
+        moves.push(from, idx_shift::<SIDE, 16>(from), MoveFlag::DBL, Piece::PAWN);
     }
 }
