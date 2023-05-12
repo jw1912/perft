@@ -1,4 +1,5 @@
 mod consts;
+mod attacks;
 pub mod movegen;
 pub mod position;
 
