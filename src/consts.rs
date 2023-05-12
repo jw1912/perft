@@ -29,8 +29,8 @@ impl Piece {
     pub const   KING: usize = 7;
 }
 
-pub struct MoveFlag;
-impl MoveFlag {
+pub struct Flag;
+impl Flag {
     pub const QUIET: u8 = 0;
     pub const DBL: u8 = 1;
     pub const  KS: u8 = 2;
@@ -48,17 +48,23 @@ impl MoveFlag {
 }
 
 // castle rights
-pub const WQS: u8 = 0b1000;
-pub const WKS: u8 = 0b0100;
-pub const BQS: u8 = 0b0010;
-pub const BKS: u8 = 0b0001;
-pub const CS: [u8; 2] = [WKS | WQS, BKS | BQS];
+pub struct Right;
+impl Right {
+    pub const WQS: u8 = 0b1000;
+    pub const WKS: u8 = 0b0100;
+    pub const BQS: u8 = 0b0010;
+    pub const BKS: u8 = 0b0001;
+    pub const SIDE: [u8; 2] = [Self::WKS | Self::WQS, Self::BKS | Self::BQS];
+}
 
 // path required to be clear for castling
-pub const B1C1D1: u64 = 0x000000000000000E;
-pub const   F1G1: u64 = 0x0000000000000060;
-pub const B8C8D8: u64 = 0x0E00000000000000;
-pub const   F8G8: u64 = 0x6000000000000000;
+pub struct Path;
+impl Path {
+    pub const BD1: u64 = 0x000000000000000E;
+    pub const FG1: u64 = 0x0000000000000060;
+    pub const BD8: u64 = 0x0E00000000000000;
+    pub const FG8: u64 = 0x6000000000000000;
+}
 
 // for efficient move making
 pub const CM: [[u64; 2]; 2] = [[9, 0x0900000000000000], [160, 0xA000000000000000]];

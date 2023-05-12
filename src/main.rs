@@ -85,10 +85,10 @@ pub fn parse_fen(fen: &str) -> Position {
     // castle rights
     for ch in vec[2].chars() {
         pos.cr |= match ch {
-            'Q' => WQS,
-            'K' => WKS,
-            'q' => BQS,
-            'k' => BKS,
+            'Q' => Right::WQS,
+            'K' => Right::WKS,
+            'q' => Right::BQS,
+            'k' => Right::BKS,
             _ => 0,
         }
     }

@@ -51,7 +51,7 @@ impl Position {
         // extracting move info
         let f = 1 << m.from;
         let t = 1 << m.to;
-        let cpc = if m.flag & MoveFlag::CAP == 0 { Piece::EMPTY } else { self.get_pc(t) };
+        let cpc = if m.flag & Flag::CAP == 0 { Piece::EMPTY } else { self.get_pc(t) };
         let side = usize::from(self.c);
 
         // updating state
@@ -67,16 +67,16 @@ impl Position {
 
         // more complex moves
         match m.flag {
-            MoveFlag::DBL => self.enp = if side == Side::WHITE { m.to - 8 } else { m.to + 8 },
-            MoveFlag::KS | MoveFlag::QS => {
-                let bits = CM[usize::from(m.flag == MoveFlag::KS)][side];
+            Flag::DBL => self.enp = if side == Side::WHITE { m.to - 8 } else { m.to + 8 },
+            Flag::KS | Flag::QS => {
+                let bits = CM[usize::from(m.flag == Flag::KS)][side];
                 self.toggle(side, Piece::ROOK, bits);
             },
-            MoveFlag::ENP => {
+            Flag::ENP => {
                 let bits = 1 << (m.to.wrapping_add([8u8.wrapping_neg(), 8u8][side]));
                 self.toggle(side ^ 1, Piece::PAWN, bits);
             },
-            MoveFlag::NPR.. => {
+            Flag::NPR.. => {
                 self.bb[Piece::PAWN] ^= t;
                 self.bb[usize::from((m.flag & 3) + 3)] ^= t;
             }

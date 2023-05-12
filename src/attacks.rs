@@ -3,8 +3,8 @@ use super::init;
 pub struct Attacks;
 impl Attacks {
     pub const PAWN: [[u64; 64]; 2] = [
-        init! {idx, 0, (((1 << idx) & !FILE) << 7) | (((1 << idx) & NOTH) << 9)},
-        init! {idx, 0, (((1 << idx) & !FILE) >> 9) | (((1 << idx) & NOTH) >> 7)},
+        init! {idx, 0, (((1 << idx) & !File::A) << 7) | (((1 << idx) & !File::H) << 9)},
+        init! {idx, 0, (((1 << idx) & !File::A) >> 9) | (((1 << idx) & !File::H) >> 7)},
     ];
 
     pub const KNIGHT: [u64; 64] = init! {idx, 0, {
@@ -17,7 +17,7 @@ impl Attacks {
     pub const KING: [u64; 64] = init! {idx, 0, {
         let mut k = 1 << idx;
         k |= (k << 8) | (k >> 8);
-        k |= ((k & !FILE) >> 1) | ((k & NOTH) << 1);
+        k |= ((k & !File::A) >> 1) | ((k & !File::H) << 1);
         k ^ (1 << idx)
     }};
 
@@ -64,11 +64,19 @@ impl Attacks {
 
         f | r
     }
+
+    #[inline(always)]
+    pub fn queen(idx: usize, occ: u64) -> u64 {
+        Self::bishop(idx, occ) | Self::rook(idx, occ)
+    }
 }
 
 // A file and ~(H file)
-const FILE: u64 = 0x0101010101010101;
-const NOTH: u64 = !(FILE << 7);
+struct File;
+impl File {
+    const A: u64 = 0x0101010101010101;
+    const H: u64 = Self::A << 7;
+}
 
 // rook attacks on rank
 const WEST: [u64; 64] = init! {idx, 0, ((1 << idx) - 1) & (0xFF << (idx & 56))};
@@ -111,7 +119,7 @@ const RMASKS: [Mask; 64] = init! {idx, Mask { bit: 0, right: 0, left: 0, file: 0
         bit,
         right: bit ^ left ^ (0xFF << (idx & 56)),
         left,
-        file: bit ^ FILE << (idx & 7)
+        file: bit ^ File::A << (idx & 7)
     }
 };
 
