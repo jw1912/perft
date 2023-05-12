@@ -1,6 +1,6 @@
 use super::consts::*;
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Default)]
 pub struct Position {
     pub bb: [u64; 8],
     pub c: bool,
@@ -18,21 +18,24 @@ pub struct Move {
 
 #[inline(always)]
 pub fn batt(idx: usize, occ: u64) -> u64 {
+    // hyperbola quintessence
     // this gets automatically vectorised when targeting avx or better
-    // disclaimer: in BMASKS, m.file = m.bit.swap_bytes(), as the file mask isn't needed
-    // hyperbola quintessence diagonal attacks
+    // m.file = m.bit.swap_bytes() here, would be a spare field otherwise
+
+    // diagonal
     let m = BMASKS[idx];
     let mut f = occ & m.right;
     let mut r = f.swap_bytes();
-    f -= m.bit;
-    r -= m.file;
+    f = f.wrapping_sub(m.bit);
+    r = r.wrapping_sub(m.file);
     f ^= r.swap_bytes();
     f &= m.right;
-    // hyperbola quintessence antidiagonal attacks
+
+    // antidiagonal
     let mut f2 = occ & m.left;
     r = f2.swap_bytes();
-    f2 -= m.bit;
-    r -= m.file;
+    f2 = f2.wrapping_sub(m.bit);
+    r = r.wrapping_sub(m.file);
     f2 ^= r.swap_bytes();
     f2 &= m.left;
 
@@ -45,10 +48,11 @@ pub fn ratt(idx: usize, occ: u64) -> u64 {
     let m = RMASKS[idx];
     let mut f = occ & m.file;
     let mut r = f.swap_bytes();
-    f -= m.bit;
-    r -= m.bit.swap_bytes();
+    f = f.wrapping_sub(m.bit);
+    r = r.wrapping_sub(m.bit.swap_bytes());
     f ^= r.swap_bytes();
     f &= m.file;
+
     // shift-lookup
     let file = idx & 7;
     let shift = idx - file;
@@ -85,20 +89,26 @@ impl Position {
         // extracting move info
         let f = 1 << m.from;
         let t = 1 << m.to;
-        let cpc = if m.flag & CAP == 0 || m.flag == ENP {E} else {self.get_pc(t)};
+        let cpc = if m.flag & CAP == 0 { E } else { self.get_pc(t) };
         let side = usize::from(self.c);
 
         // updating state
         self.c = !self.c;
         self.enp = 0;
         self.cr &= CR[m.to as usize] & CR[m.from as usize];
+
+        // move piece
         self.toggle(side, usize::from(m.mpc), f | t);
+
+        // captures
         if cpc != E { self.toggle(side ^ 1, cpc, t) }
+
+        // more complex moves
         match m.flag {
-            DBL => self.enp = if side == WH {m.to - 8} else {m.to + 8},
+            DBL => self.enp = if side == WH { m.to - 8 } else { m.to + 8 },
             KS | QS => self.toggle(side, R, CM[usize::from(m.flag == KS)][side]),
-            ENP => self.toggle(side ^ 1, P, 1 << (m.to + [8u8.wrapping_neg(), 8u8][side])),
-            PROMO.. => {
+            ENP => self.toggle(side ^ 1, P, 1 << (m.to.wrapping_add([8u8.wrapping_neg(), 8u8][side]))),
+            NPR.. => {
                 self.bb[P] ^= t;
                 self.bb[((m.flag & 3) + 3) as usize] ^= t;
             }
