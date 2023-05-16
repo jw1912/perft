@@ -47,7 +47,7 @@ impl Position {
         )
     }
 
-    pub fn do_move(&mut self, m: Move) -> bool {
+    pub fn make(&mut self, m: Move) -> bool {
         // extracting move info
         let f = 1 << m.from;
         let t = 1 << m.to;
