@@ -16,24 +16,17 @@ pub struct MoveList {
     pub len: usize,
 }
 
+impl Default for MoveList {
+    fn default() -> Self {
+        Self { list: [Move::default(); 252], len: 0 }
+    }
+}
+
 impl MoveList {
     #[inline(always)]
     fn push(&mut self, from: u8, to: u8, flag: u8, mpc: usize) {
         self.list[self.len] = Move { from, to, flag, mpc: mpc as u8 };
         self.len += 1;
-    }
-
-    #[inline(always)]
-    fn uninit() -> Self {
-        Self {
-            list: unsafe {
-                // dont use this in actual code!
-                // faster and does work, but technically ub
-                #[allow(clippy::uninit_assumed_init, invalid_value)]
-                std::mem::MaybeUninit::uninit().assume_init()
-            },
-            len: 0,
-        }
     }
 }
 
@@ -48,7 +41,7 @@ fn encode<const PC: usize, const FLAG: u8>(moves: &mut MoveList, mut attacks: u6
 
 impl Position {
     pub fn gen(&self) -> MoveList {
-        let mut moves = MoveList::uninit();
+        let mut moves = MoveList::default();
         let side = usize::from(self.c);
 
         // reused bitboards
