@@ -76,7 +76,6 @@ impl Position {
         moves
     }
 
-    #[inline(always)]
     fn castles(&self, moves: &mut MoveList, occ: u64) {
         if self.c {
             if self.cr & Right::BQS > 0 && occ & Path::BD8 == 0 && !self.is_sq_att(59, Side::BLACK, occ) {
@@ -96,7 +95,6 @@ impl Position {
     }
 }
 
-#[inline(always)]
 fn pc_moves<const PC: usize>(moves: &mut MoveList, occ: u64, opps: u64, mut attackers: u64) {
     let mut from;
     let mut attacks;
@@ -115,7 +113,6 @@ fn pc_moves<const PC: usize>(moves: &mut MoveList, occ: u64, opps: u64, mut atta
     }
 }
 
-#[inline(always)]
 fn pawn_captures(moves: &mut MoveList, mut attackers: u64, opps: u64, c: usize) {
     let (mut from, mut to, mut attacks);
     let mut promo_attackers = attackers & PENRANK[c];
@@ -140,7 +137,6 @@ fn pawn_captures(moves: &mut MoveList, mut attackers: u64, opps: u64, c: usize) 
     }
 }
 
-#[inline(always)]
 fn en_passants(moves: &mut MoveList, pawns: u64, sq: u8, c: usize) {
     let mut attackers = Attacks::PAWN[c ^ 1][usize::from(sq)] & pawns;
     let mut from;
@@ -166,7 +162,6 @@ fn idx_shift<const SIDE: usize, const AMOUNT: u8>(idx: u8) -> u8 {
     }
 }
 
-#[inline(always)]
 fn pawn_pushes<const SIDE: usize>(moves: &mut MoveList, occupied: u64, pawns: u64) {
     let mut from;
     let empty = !occupied;
