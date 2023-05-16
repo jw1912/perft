@@ -28,22 +28,22 @@ impl Attacks {
     pub fn bishop(idx: usize, occ: u64) -> u64 {
         // diagonal
         let m = BMASKS[idx];
-        let mut f = occ & m.right;
-        let mut r = f.swap_bytes();
-        f = f.wrapping_sub(m.bit);
-        r = r.wrapping_sub(m.file);
-        f ^= r.swap_bytes();
-        f &= m.right;
+        let mut f1 = occ & m.right;
+        let mut r1 = f1.swap_bytes();
+        f1  = f1.wrapping_sub(m.bit);
+        r1  = r1.wrapping_sub(m.file);
+        f1 ^= r1.swap_bytes();
+        f1 &= m.right;
 
         // antidiagonal
         let mut f2 = occ & m.left;
-        r = f2.swap_bytes();
-        f2 = f2.wrapping_sub(m.bit);
-        r = r.wrapping_sub(m.file);
-        f2 ^= r.swap_bytes();
+        let mut r2 = f2.swap_bytes();
+        f2  = f2.wrapping_sub(m.bit);
+        r2  = r2.wrapping_sub(m.file);
+        f2 ^= r2.swap_bytes();
         f2 &= m.left;
 
-        f | f2
+        f1 | f2
     }
 
     #[inline(always)]
@@ -52,8 +52,8 @@ impl Attacks {
         let m = RMASKS[idx];
         let mut f = occ & m.file;
         let mut r = f.swap_bytes();
-        f = f.wrapping_sub(m.bit);
-        r = r.wrapping_sub(m.bit.swap_bytes());
+        f  = f.wrapping_sub(m.bit);
+        r  = r.wrapping_sub(m.bit.swap_bytes());
         f ^= r.swap_bytes();
         f &= m.file;
 
