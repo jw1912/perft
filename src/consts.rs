@@ -1,9 +1,9 @@
 // Macro for calculating tables (until const fn pointers are stable).
 #[macro_export]
 macro_rules! init {
-    ($idx:ident, $init:expr, $($rest:tt)+) => {{
-        let mut res = [$init; 64];
+    ($idx:ident, $($rest:tt)+) => {{
         let mut $idx = 0;
+        let mut res = [{$($rest)+}; 64];
         while $idx < 64 {
             res[$idx] = {$($rest)+};
             $idx += 1;
@@ -68,8 +68,17 @@ impl Path {
 
 // for efficient move making
 pub const CM: [[u64; 2]; 2] = [[9, 0x0900000000000000], [160, 0xA000000000000000]];
-pub const CR: [u8; 64] =
-    init! {idx, 0, match idx {0 => 7, 4 => 3, 7 => 11, 56 => 13, 60 => 12, 63 => 14, _ => 15}};
+pub const CR: [u8; 64] = init! {idx,
+    match idx {
+         0 =>  7,
+         4 =>  3,
+         7 => 11,
+        56 => 13,
+        60 => 12,
+        63 => 14,
+         _ => 15
+    }
+};
 
 // for promotions / double pushes
 pub const PENRANK: [u64; 2] = [0x00FF000000000000, 0x000000000000FF00];

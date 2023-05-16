@@ -3,18 +3,18 @@ use super::init;
 pub struct Attacks;
 impl Attacks {
     pub const PAWN: [[u64; 64]; 2] = [
-        init! {idx, 0, (((1 << idx) & !File::A) << 7) | (((1 << idx) & !File::H) << 9)},
-        init! {idx, 0, (((1 << idx) & !File::A) >> 9) | (((1 << idx) & !File::H) >> 7)},
+        init! {idx, (((1 << idx) & !File::A) << 7) | (((1 << idx) & !File::H) << 9)},
+        init! {idx, (((1 << idx) & !File::A) >> 9) | (((1 << idx) & !File::H) >> 7)},
     ];
 
-    pub const KNIGHT: [u64; 64] = init! {idx, 0, {
+    pub const KNIGHT: [u64; 64] = init! {idx, {
         let n = 1 << idx;
         let h1 = ((n >> 1) & 0x7f7f7f7f7f7f7f7f) | ((n << 1) & 0xfefefefefefefefe);
         let h2 = ((n >> 2) & 0x3f3f3f3f3f3f3f3f) | ((n << 2) & 0xfcfcfcfcfcfcfcfc);
         (h1 << 16) | (h1 >> 16) | (h2 << 8) | (h2 >> 8)
     }};
 
-    pub const KING: [u64; 64] = init! {idx, 0, {
+    pub const KING: [u64; 64] = init! {idx, {
         let mut k = 1 << idx;
         k |= (k << 8) | (k >> 8);
         k |= ((k & !File::A) >> 1) | ((k & !File::H) << 1);
@@ -78,7 +78,8 @@ impl File {
     const H: u64 = Self::A << 7;
 }
 
-const WEST: [u64; 64] = init! {idx, 0, ((1 << idx) - 1) & (0xFF << (idx & 56))};
+const EAST: [u64; 64] = init! {idx, (1 << idx) ^ WEST[idx] ^ (0xFF << (idx & 56))};
+const WEST: [u64; 64] = init! {idx, ((1 << idx) - 1) & (0xFF << (idx & 56))};
 const DIAGS: [u64; 15] = [
     0x0100000000000000,
     0x0201000000000000,
@@ -98,7 +99,7 @@ const DIAGS: [u64; 15] = [
 ];
 
 // masks for hyperbola quintessence bishop attacks
-const BMASKS: [Mask; 64] = init! {idx, Mask { bit: 0, right: 0, left: 0, file: 0 },
+const BMASKS: [Mask; 64] = init! {idx,
     let bit = 1 << idx;
     Mask {
         bit,
@@ -109,14 +110,12 @@ const BMASKS: [Mask; 64] = init! {idx, Mask { bit: 0, right: 0, left: 0, file: 0
 };
 
 // masks for hyperbola quintessence rook file attacks
-const RMASKS: [Mask; 64] = init! {idx, Mask { bit: 0, right: 0, left: 0, file: 0 },
-    let bit = 1 << idx;
-    let left = (bit - 1) & (0xFF << (idx & 56));
+const RMASKS: [Mask; 64] = init! {idx,
     Mask {
-        bit,
-        right: bit ^ left ^ (0xFF << (idx & 56)),
-        left,
-        file: bit ^ File::A << (idx & 7)
+        bit: 1 << idx,
+        right: EAST[idx],
+        left: WEST[idx],
+        file: (1 << idx) ^ File::A << (idx & 7)
     }
 };
 
@@ -131,24 +130,16 @@ struct Mask {
 // rank lookup for rook attacks
 const RANKS: [[u64; 64]; 8] = {
     let mut ret = [[0; 64]; 8];
-    let mut file: usize = 0;
+    let mut file = 0;
     while file < 8 {
-        let mut occ_idx = 0;
-        while occ_idx < 64 {
-            let occ = (occ_idx << 1) as u64;
-            let m: Mask = RMASKS[file];
-
-            // east attacks
-            let mut e: u64 = m.right & occ;
-            let r: u64 = e & e.wrapping_neg();
-            e = (r ^ (r.wrapping_sub(m.bit))) & m.right;
-
-            // west attacks
-            let w: u64 = m.left ^ WEST[(((m.left & occ) | 1).leading_zeros() ^ 63) as usize];
-
-            ret[file][occ_idx] = e | w;
-            occ_idx += 1;
-        }
+        ret[file] = init! {idx, {
+            let occ = (idx << 1) as u64;
+            let east_idx = ((EAST[file] & occ) | (1 << 63)).trailing_zeros();
+            let west_idx = ((WEST[file] & occ) | 1).leading_zeros() ^ 63;
+            let east = EAST[file] ^ EAST[east_idx as usize];
+            let west = WEST[file] ^ WEST[west_idx as usize];
+            east | west
+        }};
         file += 1;
     }
     ret
