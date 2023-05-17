@@ -60,14 +60,14 @@ impl Right {
 // path required to be clear for castling
 pub struct Path;
 impl Path {
-    pub const BD1: u64 = 0x000000000000000E;
-    pub const FG1: u64 = 0x0000000000000060;
-    pub const BD8: u64 = 0x0E00000000000000;
-    pub const FG8: u64 = 0x6000000000000000;
+    pub const BD1: u64 = 0x0000_0000_0000_000E;
+    pub const FG1: u64 = 0x0000_0000_0000_0060;
+    pub const BD8: u64 = 0x0E00_0000_0000_0000;
+    pub const FG8: u64 = 0x6000_0000_0000_0000;
 }
 
 // for efficient move making
-pub const CM: [[u64; 2]; 2] = [[9, 0x0900000000000000], [160, 0xA000000000000000]];
+pub const CM: [[u64; 2]; 2] = [[9, 0x0900_0000_0000_0000], [160, 0xA000_0000_0000_0000]];
 pub const CR: [u8; 64] = init! {idx,
     match idx {
          0 =>  7,
@@ -81,5 +81,5 @@ pub const CR: [u8; 64] = init! {idx,
 };
 
 // for promotions / double pushes
-pub const PENRANK: [u64; 2] = [0x00FF000000000000, 0x000000000000FF00];
-pub const DBLRANK: [u64; 2] = [0x00000000FF000000, 0x000000FF00000000];
+pub const PENRANK: [u64; 2] = [0x00FF_0000_0000_0000, 0x0000_0000_0000_FF00];
+pub const DBLRANK: [u64; 2] = [0x0000_0000_FF00_0000, 0x0000_00FF_0000_0000];

@@ -20,13 +20,14 @@ pub struct Move {
 }
 
 impl Position {
-    #[inline(always)]
+    #[inline]
     pub fn toggle(&mut self, c: usize, pc: usize, bit: u64) {
         self.bb[pc] ^= bit;
         self.bb[ c] ^= bit;
     }
 
-    #[inline(always)]
+    #[must_use]
+    #[inline]
     pub fn is_sq_att(&self, sq: usize, side: usize, occ: u64) -> bool {
         ( (Attacks::KNIGHT[sq] & self.bb[Piece::KNIGHT])
         | (Attacks::KING  [sq] & self.bb[Piece::KING  ])
@@ -36,7 +37,8 @@ impl Position {
         ) & self.bb[side ^ 1] > 0
     }
 
-    #[inline(always)]
+    #[must_use]
+    #[inline]
     pub fn get_pc(&self, bit: u64) -> usize {
         usize::from(
             (self.bb[Piece::KNIGHT] | self.bb[Piece::ROOK]) & bit > 0

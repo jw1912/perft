@@ -23,14 +23,14 @@ impl Default for MoveList {
 }
 
 impl MoveList {
-    #[inline(always)]
+    #[inline]
     fn push(&mut self, from: u8, to: u8, flag: u8, mpc: usize) {
         self.list[self.len] = Move { from, to, flag, mpc: mpc as u8 };
         self.len += 1;
     }
 }
 
-#[inline(always)]
+#[inline]
 fn encode<const PC: usize, const FLAG: u8>(moves: &mut MoveList, mut attacks: u64, from: u8) {
     let mut to: u8;
     while attacks > 0 {
@@ -40,6 +40,7 @@ fn encode<const PC: usize, const FLAG: u8>(moves: &mut MoveList, mut attacks: u6
 }
 
 impl Position {
+    #[must_use]
     pub fn gen(&self) -> MoveList {
         let mut moves = MoveList::default();
         let side = usize::from(self.c);
@@ -52,7 +53,7 @@ impl Position {
 
         // castling
         if self.cr & Right::SIDE[side] > 0 && !self.is_sq_att(4 + 56 * usize::from(side == Side::BLACK), side, occ) {
-            self.castles(&mut moves, occ)
+            self.castles(&mut moves, occ);
         }
 
         // pawns
@@ -62,7 +63,7 @@ impl Position {
             pawn_pushes::<{ Side::BLACK }>(&mut moves, occ, pawns);
         }
         if self.enp > 0 {
-            en_passants(&mut moves, pawns, self.enp, side)
+            en_passants(&mut moves, pawns, self.enp, side);
         }
         pawn_captures(&mut moves, pawns, opps, side);
 
@@ -79,17 +80,17 @@ impl Position {
     fn castles(&self, moves: &mut MoveList, occ: u64) {
         if self.c {
             if self.cr & Right::BQS > 0 && occ & Path::BD8 == 0 && !self.is_sq_att(59, Side::BLACK, occ) {
-                moves.push(60, 58, Flag::QS, Piece::KING)
+                moves.push(60, 58, Flag::QS, Piece::KING);
             }
             if self.cr & Right::BKS > 0 && occ & Path::FG8 == 0 && !self.is_sq_att(61, Side::BLACK, occ) {
-                moves.push(60, 62, Flag::KS, Piece::KING)
+                moves.push(60, 62, Flag::KS, Piece::KING);
             }
         } else {
             if self.cr & Right::WQS > 0 && occ & Path::BD1 == 0 && !self.is_sq_att( 3, Side::WHITE, occ) {
-                moves.push( 4,  2, Flag::QS, Piece::KING)
+                moves.push( 4,  2, Flag::QS, Piece::KING);
             }
             if self.cr & Right::WKS > 0 && occ & Path::FG1 == 0 && !self.is_sq_att( 5, Side::WHITE, occ) {
-                moves.push( 4,  6, Flag::KS, Piece::KING)
+                moves.push( 4,  6, Flag::KS, Piece::KING);
             }
         }
     }

@@ -1,3 +1,7 @@
+#![warn(clippy::pedantic)]
+#![allow(clippy::cast_possible_truncation)]
+#![allow(clippy::cast_precision_loss)]
+
 mod consts;
 mod attacks;
 pub mod movegen;
@@ -40,9 +44,10 @@ fn main() {
         "total time {} nodes {total} nps {:.3}",
         dur.as_millis(),
         total as f64 / dur.as_micros() as f64
-    )
+    );
 }
 
+#[must_use]
 pub fn perft(pos: &Position, depth: u8) -> u64 {
     let mut tmp;
     let mut positions = 0;
@@ -55,6 +60,7 @@ pub fn perft(pos: &Position, depth: u8) -> u64 {
     positions
 }
 
+#[must_use]
 pub fn parse_fen(fen: &str) -> Position {
     let mut pos = Position::default();
     let vec: Vec<&str> = fen.split_whitespace().collect();
@@ -67,7 +73,7 @@ pub fn parse_fen(fen: &str) -> Position {
             row -= 1;
             col = 0;
         } else if ('1'..='8').contains(&ch) {
-            col += ch.to_string().parse::<i16>().unwrap_or(0)
+            col += ch.to_string().parse::<i16>().unwrap_or(0);
         } else {
             let idx: usize = ['P', 'N', 'B', 'R', 'Q', 'K', 'p', 'n', 'b', 'r', 'q', 'k']
                 .iter()

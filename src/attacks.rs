@@ -9,8 +9,8 @@ impl Attacks {
 
     pub const KNIGHT: [u64; 64] = init! {idx, {
         let n = 1 << idx;
-        let h1 = ((n >> 1) & 0x7f7f7f7f7f7f7f7f) | ((n << 1) & 0xfefefefefefefefe);
-        let h2 = ((n >> 2) & 0x3f3f3f3f3f3f3f3f) | ((n << 2) & 0xfcfcfcfcfcfcfcfc);
+        let h1 = ((n >> 1) & 0x7f7f_7f7f_7f7f_7f7f) | ((n << 1) & 0xfefe_fefe_fefe_fefe);
+        let h2 = ((n >> 2) & 0x3f3f_3f3f_3f3f_3f3f) | ((n << 2) & 0xfcfc_fcfc_fcfc_fcfc);
         (h1 << 16) | (h1 >> 16) | (h2 << 8) | (h2 >> 8)
     }};
 
@@ -24,7 +24,7 @@ impl Attacks {
     // hyperbola quintessence
     // this gets automatically vectorised when targeting avx or better
     // m.file = m.bit.swap_bytes() here, would be a spare field otherwise
-    #[inline(always)]
+    #[inline]
     pub fn bishop(idx: usize, occ: u64) -> u64 {
         // diagonal
         let m = BMASKS[idx];
@@ -46,7 +46,7 @@ impl Attacks {
         f1 | f2
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn rook(idx: usize, occ: u64) -> u64 {
         // hyperbola quintessence file attacks
         let m = RMASKS[idx];
@@ -65,7 +65,7 @@ impl Attacks {
         f | r
     }
 
-    #[inline(always)]
+    #[inline]
     pub fn queen(idx: usize, occ: u64) -> u64 {
         Self::bishop(idx, occ) | Self::rook(idx, occ)
     }
@@ -74,28 +74,28 @@ impl Attacks {
 // A file and ~(H file)
 struct File;
 impl File {
-    const A: u64 = 0x0101010101010101;
+    const A: u64 = 0x0101_0101_0101_0101;
     const H: u64 = Self::A << 7;
 }
 
 const EAST: [u64; 64] = init! {idx, (1 << idx) ^ WEST[idx] ^ (0xFF << (idx & 56))};
 const WEST: [u64; 64] = init! {idx, ((1 << idx) - 1) & (0xFF << (idx & 56))};
 const DIAGS: [u64; 15] = [
-    0x0100000000000000,
-    0x0201000000000000,
-    0x0402010000000000,
-    0x0804020100000000,
-    0x1008040201000000,
-    0x2010080402010000,
-    0x4020100804020100,
-    0x8040201008040201,
-    0x0080402010080402,
-    0x0000804020100804,
-    0x0000008040201008,
-    0x0000000080402010,
-    0x0000000000804020,
-    0x0000000000008040,
-    0x0000000000000080,
+    0x0100_0000_0000_0000,
+    0x0201_0000_0000_0000,
+    0x0402_0100_0000_0000,
+    0x0804_0201_0000_0000,
+    0x1008_0402_0100_0000,
+    0x2010_0804_0201_0000,
+    0x4020_1008_0402_0100,
+    0x8040_2010_0804_0201,
+    0x0080_4020_1008_0402,
+    0x0000_8040_2010_0804,
+    0x0000_0080_4020_1008,
+    0x0000_0000_8040_2010,
+    0x0000_0000_0080_4020,
+    0x0000_0000_0000_8040,
+    0x0000_0000_0000_0080,
 ];
 
 // masks for hyperbola quintessence bishop attacks
