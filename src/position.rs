@@ -1,22 +1,28 @@
 use super::{
     attacks::Attacks,
-    consts::{CM, CR, Flag, Piece, Side},
+    consts::{CM, CR, Flag, Piece},
 };
 
 #[derive(Copy, Clone, Default)]
 pub struct Position {
-    pub  bb: [u64; 8],
-    pub   c: bool,
-    pub enp: u8,
-    pub  cr: u8,
+    pub bb: [u64; 8],
+    pub c: bool,
+    pub enp_sq: u8,
+    pub rights: u8,
 }
 
 #[derive(Copy, Clone, Default)]
 pub struct Move {
     pub from: u8,
-    pub   to: u8,
+    pub to: u8,
     pub flag: u8,
-    pub  mpc: u8,
+    pub moved: u8,
+}
+
+#[must_use]
+#[inline]
+fn enp_sq(side: usize, sq: u8) -> u8 {
+    sq.wrapping_add([8u8.wrapping_neg(), 8u8][side])
 }
 
 impl Position {
@@ -49,38 +55,42 @@ impl Position {
         )
     }
 
-    pub fn make(&mut self, m: Move) -> bool {
+    pub fn make(&mut self, mov: Move) -> bool {
         // extracting move info
-        let f = 1 << m.from;
-        let t = 1 << m.to;
-        let cpc = if m.flag & Flag::CAP == 0 { Piece::EMPTY } else { self.get_pc(t) };
         let side = usize::from(self.c);
+        let bb_from = 1 << mov.from;
+        let bb_to = 1 << mov.to;
+        let captured = if mov.flag & Flag::CAP == 0 {
+            Piece::EMPTY
+        } else {
+            self.get_pc(bb_to)
+        };
 
         // updating state
         self.c = !self.c;
-        self.enp = 0;
-        self.cr &= CR[usize::from(m.to)] & CR[usize::from(m.from)];
+        self.enp_sq = 0;
+        self.rights &= CR[usize::from(mov.to)] & CR[usize::from(mov.from)];
 
         // move piece
-        self.toggle(side, usize::from(m.mpc), f | t);
+        self.toggle(side, usize::from(mov.moved), bb_from | bb_to);
 
         // captures
-        if cpc != Piece::EMPTY { self.toggle(side ^ 1, cpc, t) }
+        if captured != Piece::EMPTY { self.toggle(side ^ 1, captured, bb_to) }
 
         // more complex moves
-        match m.flag {
-            Flag::DBL => self.enp = if side == Side::WHITE { m.to - 8 } else { m.to + 8 },
+        match mov.flag {
+            Flag::DBL => self.enp_sq = enp_sq(side, mov.to),
             Flag::KS | Flag::QS => {
-                let bits = CM[usize::from(m.flag == Flag::KS)][side];
+                let bits = CM[usize::from(mov.flag == Flag::KS)][side];
                 self.toggle(side, Piece::ROOK, bits);
             },
             Flag::ENP => {
-                let bits = 1 << (m.to.wrapping_add([8u8.wrapping_neg(), 8u8][side]));
+                let bits = 1 << enp_sq(side, mov.to);
                 self.toggle(side ^ 1, Piece::PAWN, bits);
             },
             Flag::NPR.. => {
-                self.bb[Piece::PAWN] ^= t;
-                self.bb[usize::from((m.flag & 3) + 3)] ^= t;
+                self.bb[Piece::PAWN] ^= bb_to;
+                self.bb[usize::from((mov.flag & 3) + 3)] ^= bb_to;
             }
             _ => {}
         }

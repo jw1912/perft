@@ -90,7 +90,7 @@ pub fn parse_fen(fen: &str) -> Position {
 
     // castle rights
     for ch in vec[2].chars() {
-        pos.cr |= match ch {
+        pos.rights |= match ch {
             'Q' => Right::WQS,
             'K' => Right::WKS,
             'q' => Right::BQS,
@@ -100,7 +100,7 @@ pub fn parse_fen(fen: &str) -> Position {
     }
 
     // en passant square
-    pos.enp = if vec[3] == "-" {
+    pos.enp_sq = if vec[3] == "-" {
         0
     } else {
         let chs: Vec<char> = vec[3].chars().collect();
