@@ -1,16 +1,4 @@
-// Macro for calculating tables (until const fn pointers are stable).
-#[macro_export]
-macro_rules! init {
-    ($idx:ident, $($rest:tt)+) => {{
-        let mut $idx = 0;
-        let mut res = [{$($rest)+}; 64];
-        while $idx < 64 {
-            res[$idx] = {$($rest)+};
-            $idx += 1;
-        }
-        res
-    }};
-}
+use super::init;
 
 pub struct Side;
 impl Side {

@@ -1,4 +1,16 @@
-use super::init;
+// Macro for calculating tables (until const fn pointers are stable).
+#[macro_export]
+macro_rules! init {
+    ($idx:ident, $($rest:tt)+) => {{
+        let mut $idx = 0;
+        let mut res = [{$($rest)+}; 64];
+        while $idx < 64 {
+            res[$idx] = {$($rest)+};
+            $idx += 1;
+        }
+        res
+    }};
+}
 
 pub struct Attacks;
 impl Attacks {
@@ -23,46 +35,43 @@ impl Attacks {
 
     // hyperbola quintessence
     // this gets automatically vectorised when targeting avx or better
-    // m.file = m.bit.swap_bytes() here, would be a spare field otherwise
     #[inline]
-    pub fn bishop(idx: usize, occ: u64) -> u64 {
-        // diagonal
-        let m = BMASKS[idx];
-        let mut f1 = occ & m.right;
-        let mut r1 = f1.swap_bytes();
-        f1  = f1.wrapping_sub(m.bit);
-        r1  = r1.wrapping_sub(m.file);
-        f1 ^= r1.swap_bytes();
-        f1 &= m.right;
+    pub fn bishop(sq: usize, occ: u64) -> u64 {
+        let mask = Lookup::BISHOP[sq];
 
-        // antidiagonal
-        let mut f2 = occ & m.left;
-        let mut r2 = f2.swap_bytes();
-        f2  = f2.wrapping_sub(m.bit);
-        r2  = r2.wrapping_sub(m.file);
-        f2 ^= r2.swap_bytes();
-        f2 &= m.left;
+        let mut diag = occ & mask.diag;
+        let mut rev1 = diag.swap_bytes();
+        diag  = diag.wrapping_sub(mask.bit);
+        rev1  = rev1.wrapping_sub(mask.swap);
+        diag ^= rev1.swap_bytes();
+        diag &= mask.diag;
 
-        f1 | f2
+        let mut anti = occ & mask.anti;
+        let mut rev2 = anti.swap_bytes();
+        anti  = anti.wrapping_sub(mask.bit);
+        rev2  = rev2.wrapping_sub(mask.swap);
+        anti ^= rev2.swap_bytes();
+        anti &= mask.anti;
+
+        diag | anti
     }
 
+    // shifted lookup
+    // files and ranks are mapped to 1st rank and looked up by occupancy
     #[inline]
-    pub fn rook(idx: usize, occ: u64) -> u64 {
-        // hyperbola quintessence file attacks
-        let m = RMASKS[idx];
-        let mut f = occ & m.file;
-        let mut r = f.swap_bytes();
-        f  = f.wrapping_sub(m.bit);
-        r  = r.wrapping_sub(m.bit.swap_bytes());
-        f ^= r.swap_bytes();
-        f &= m.file;
+    pub fn rook(sq: usize, occ: u64) -> u64 {
+        let file = sq & 7;
+        let rank = sq / 8;
 
-        // shift-lookup
-        let file = idx & 7;
-        let shift = idx - file;
-        r = RANKS[file][((occ >> (shift + 1)) & 0x3F) as usize] << shift;
+        let flip = ((occ >> file) & File::A).wrapping_mul(LEADING_DIAG);
+        let file_idx = (flip >> 57) & 0x3F;
+        let files = Lookup::FILE[rank][file_idx as usize] >> (7 - file);
 
-        f | r
+        let rank_shift = sq - file;
+        let rank_idx = (occ >> (rank_shift + 1)) & 0x3F;
+        let ranks = Lookup::RANK[file][rank_idx as usize] << rank_shift;
+
+        ranks | files
     }
 
     #[inline]
@@ -97,50 +106,55 @@ const DIAGS: [u64; 15] = [
     0x0000_0000_0000_8040,
     0x0000_0000_0000_0080,
 ];
+const LEADING_DIAG: u64 = DIAGS[7];
 
 // masks for hyperbola quintessence bishop attacks
-const BMASKS: [Mask; 64] = init! {idx,
-    let bit = 1 << idx;
-    Mask {
-        bit,
-        right: bit ^ DIAGS[7 + (idx & 7) - (idx >> 3)],
-        left: bit ^ DIAGS[(idx & 7) + (idx >> 3)].swap_bytes(),
-        file: bit.swap_bytes()
-    }
-};
-
-// masks for hyperbola quintessence rook file attacks
-const RMASKS: [Mask; 64] = init! {idx,
-    Mask {
-        bit: 1 << idx,
-        right: EAST[idx],
-        left: WEST[idx],
-        file: (1 << idx) ^ File::A << (idx & 7)
-    }
-};
-
 #[derive(Clone, Copy)]
 struct Mask {
     bit: u64,
-    right: u64,
-    left: u64,
-    file: u64,
+    diag: u64,
+    anti: u64,
+    swap: u64,
 }
 
-// rank lookup for rook attacks
-const RANKS: [[u64; 64]; 8] = {
-    let mut ret = [[0; 64]; 8];
-    let mut file = 0;
-    while file < 8 {
-        ret[file] = init! {idx, {
-            let occ = (idx << 1) as u64;
-            let east_idx = ((EAST[file] & occ) | (1 << 63)).trailing_zeros();
-            let west_idx = ((WEST[file] & occ) | 1).leading_zeros() ^ 63;
-            let east = EAST[file] ^ EAST[east_idx as usize];
-            let west = WEST[file] ^ WEST[west_idx as usize];
-            east | west
-        }};
-        file += 1;
-    }
-    ret
-};
+struct Lookup;
+impl Lookup {
+    const BISHOP: [Mask; 64] = init! {idx,
+        let bit = 1 << idx;
+        Mask {
+            bit,
+            diag: bit ^ DIAGS[7 + (idx & 7) - (idx >> 3)],
+            anti: bit ^ DIAGS[(idx & 7) + (idx >> 3)].swap_bytes(),
+            swap: bit.swap_bytes()
+        }
+    };
+
+    const RANK: [[u64; 64]; 8] = {
+        let mut ret = [[0; 64]; 8];
+        let mut file = 0;
+        while file < 8 {
+            ret[file] = init! {idx, {
+                let occ = (idx << 1) as u64;
+                // classical attacks for the rank
+                let east = ((EAST[file] & occ) | (1 << 63)).trailing_zeros() as usize;
+                let west = ((WEST[file] & occ) | 1).leading_zeros() as usize ^ 63;
+                EAST[file] ^ EAST[east] | WEST[file] ^ WEST[west]
+            }};
+            file += 1;
+        }
+        ret
+    };
+
+    const FILE: [[u64; 64]; 8] = {
+        let mut ret = [[0; 64]; 8];
+        let mut rank = 0;
+        while rank < 8 {
+            ret[rank] = init! {idx, {
+                let ranks = Self::RANK[7 - rank][idx];
+                ranks.wrapping_mul(LEADING_DIAG) & File::H
+            }};
+            rank += 1;
+        }
+        ret
+    };
+}
