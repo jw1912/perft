@@ -19,7 +19,6 @@ pub struct Move {
     pub moved: u8,
 }
 
-#[must_use]
 #[inline]
 fn enp_sq(side: usize, sq: u8) -> u8 {
     sq.wrapping_add([8u8.wrapping_neg(), 8u8][side])
