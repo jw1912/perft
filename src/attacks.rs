@@ -1,12 +1,12 @@
 // Macro for calculating tables (until const fn pointers are stable).
 #[macro_export]
 macro_rules! init {
-    ($idx:ident, $($rest:tt)+) => {{
-        let mut $idx = 0;
+    ($sq:ident, $($rest:tt)+) => {{
+        let mut $sq = 0;
         let mut res = [{$($rest)+}; 64];
-        while $idx < 64 {
-            res[$idx] = {$($rest)+};
-            $idx += 1;
+        while $sq < 64 {
+            res[$sq] = {$($rest)+};
+            $sq += 1;
         }
         res
     }};
@@ -15,22 +15,22 @@ macro_rules! init {
 pub struct Attacks;
 impl Attacks {
     pub const PAWN: [[u64; 64]; 2] = [
-        init! {idx, (((1 << idx) & !File::A) << 7) | (((1 << idx) & !File::H) << 9)},
-        init! {idx, (((1 << idx) & !File::A) >> 9) | (((1 << idx) & !File::H) >> 7)},
+        init! {sq, (((1 << sq) & !File::A) << 7) | (((1 << sq) & !File::H) << 9)},
+        init! {sq, (((1 << sq) & !File::A) >> 9) | (((1 << sq) & !File::H) >> 7)},
     ];
 
-    pub const KNIGHT: [u64; 64] = init! {idx, {
-        let n = 1 << idx;
+    pub const KNIGHT: [u64; 64] = init! {sq, {
+        let n = 1 << sq;
         let h1 = ((n >> 1) & 0x7f7f_7f7f_7f7f_7f7f) | ((n << 1) & 0xfefe_fefe_fefe_fefe);
         let h2 = ((n >> 2) & 0x3f3f_3f3f_3f3f_3f3f) | ((n << 2) & 0xfcfc_fcfc_fcfc_fcfc);
         (h1 << 16) | (h1 >> 16) | (h2 << 8) | (h2 >> 8)
     }};
 
-    pub const KING: [u64; 64] = init! {idx, {
-        let mut k = 1 << idx;
+    pub const KING: [u64; 64] = init! {sq, {
+        let mut k = 1 << sq;
         k |= (k << 8) | (k >> 8);
         k |= ((k & !File::A) >> 1) | ((k & !File::H) << 1);
-        k ^ (1 << idx)
+        k ^ (1 << sq)
     }};
 
     // hyperbola quintessence
@@ -63,20 +63,20 @@ impl Attacks {
         let file = sq & 7;
         let rank = sq / 8;
 
-        let flip = ((occ >> file) & File::A).wrapping_mul(LEADING_DIAG);
-        let file_idx = (flip >> 57) & 0x3F;
-        let files = Lookup::FILE[rank][file_idx as usize] >> (7 - file);
+        let flip = ((occ >> file) & File::A).wrapping_mul(DIAG);
+        let file_sq = (flip >> 57) & 0x3F;
+        let files = Lookup::FILE[rank][file_sq as usize] >> (7 - file);
 
         let rank_shift = sq - file;
-        let rank_idx = (occ >> (rank_shift + 1)) & 0x3F;
-        let ranks = Lookup::RANK[file][rank_idx as usize] << rank_shift;
+        let rank_sq = (occ >> (rank_shift + 1)) & 0x3F;
+        let ranks = Lookup::RANK[file][rank_sq as usize] << rank_shift;
 
         ranks | files
     }
 
     #[inline]
-    pub fn queen(idx: usize, occ: u64) -> u64 {
-        Self::bishop(idx, occ) | Self::rook(idx, occ)
+    pub fn queen(sq: usize, occ: u64) -> u64 {
+        Self::bishop(sq, occ) | Self::rook(sq, occ)
     }
 }
 
@@ -87,8 +87,9 @@ impl File {
     const H: u64 = Self::A << 7;
 }
 
-const EAST: [u64; 64] = init! {idx, (1 << idx) ^ WEST[idx] ^ (0xFF << (idx & 56))};
-const WEST: [u64; 64] = init! {idx, ((1 << idx) - 1) & (0xFF << (idx & 56))};
+const EAST: [u64; 64] = init! {sq, (1 << sq) ^ WEST[sq] ^ (0xFF << (sq & 56))};
+const WEST: [u64; 64] = init! {sq, ((1 << sq) - 1) & (0xFF << (sq & 56))};
+const DIAG: u64 = DIAGS[7];
 const DIAGS: [u64; 15] = [
     0x0100_0000_0000_0000,
     0x0201_0000_0000_0000,
@@ -106,7 +107,6 @@ const DIAGS: [u64; 15] = [
     0x0000_0000_0000_8040,
     0x0000_0000_0000_0080,
 ];
-const LEADING_DIAG: u64 = DIAGS[7];
 
 // masks for hyperbola quintessence bishop attacks
 #[derive(Clone, Copy)]
@@ -119,12 +119,12 @@ struct Mask {
 
 struct Lookup;
 impl Lookup {
-    const BISHOP: [Mask; 64] = init! {idx,
-        let bit = 1 << idx;
+    const BISHOP: [Mask; 64] = init! {sq,
+        let bit = 1 << sq;
         Mask {
             bit,
-            diag: bit ^ DIAGS[7 + (idx & 7) - (idx >> 3)],
-            anti: bit ^ DIAGS[(idx & 7) + (idx >> 3)].swap_bytes(),
+            diag: bit ^ DIAGS[7 + (sq & 7) - (sq >> 3)],
+            anti: bit ^ DIAGS[(sq & 7) + (sq >> 3)].swap_bytes(),
             swap: bit.swap_bytes()
         }
     };
@@ -133,11 +133,10 @@ impl Lookup {
         let mut ret = [[0; 64]; 8];
         let mut file = 0;
         while file < 8 {
-            ret[file] = init! {idx, {
-                let occ = (idx << 1) as u64;
-                // classical attacks for the rank
-                let east = ((EAST[file] & occ) | (1 << 63)).trailing_zeros() as usize;
-                let west = ((WEST[file] & occ) | 1).leading_zeros() as usize ^ 63;
+            ret[file] = init! {occ, {
+                let mask = (occ << 1) as u64;
+                let east = ((EAST[file] & mask) | (1 << 63)).trailing_zeros() as usize;
+                let west = ((WEST[file] & mask) | 1).leading_zeros() as usize ^ 63;
                 EAST[file] ^ EAST[east] | WEST[file] ^ WEST[west]
             }};
             file += 1;
@@ -149,9 +148,9 @@ impl Lookup {
         let mut ret = [[0; 64]; 8];
         let mut rank = 0;
         while rank < 8 {
-            ret[rank] = init! {idx, {
-                let ranks = Self::RANK[7 - rank][idx];
-                ranks.wrapping_mul(LEADING_DIAG) & File::H
+            ret[rank] = init! {occ, {
+                let ranks = Self::RANK[7 - rank][occ];
+                ranks.wrapping_mul(DIAG) & File::H
             }};
             rank += 1;
         }
