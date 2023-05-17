@@ -55,8 +55,8 @@ impl Path {
 }
 
 // for efficient move making
-pub const CM: [[u64; 2]; 2] = [[9, 0x0900_0000_0000_0000], [160, 0xA000_0000_0000_0000]];
-pub const CR: [u8; 64] = init! {idx,
+pub const ROOK_MOVES: [[u64; 2]; 2] = [[9, 0x0900_0000_0000_0000], [160, 0xA000_0000_0000_0000]];
+pub const CASTLE_MASK: [u8; 64] = init! {idx,
     match idx {
          0 =>  7,
          4 =>  3,

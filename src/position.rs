@@ -1,6 +1,6 @@
 use super::{
     attacks::Attacks,
-    consts::{CM, CR, Flag, Piece},
+    consts::{CASTLE_MASK, Flag, Piece, ROOK_MOVES},
 };
 
 #[derive(Copy, Clone, Default)]
@@ -68,7 +68,7 @@ impl Position {
         // updating state
         self.c = !self.c;
         self.enp_sq = 0;
-        self.rights &= CR[usize::from(mov.to)] & CR[usize::from(mov.from)];
+        self.rights &= CASTLE_MASK[usize::from(mov.to)] & CASTLE_MASK[usize::from(mov.from)];
 
         // move piece
         self.toggle(side, usize::from(mov.moved), bb_from | bb_to);
@@ -80,7 +80,7 @@ impl Position {
         match mov.flag {
             Flag::DBL => self.enp_sq = enp_sq(side, mov.to),
             Flag::KS | Flag::QS => {
-                let bits = CM[usize::from(mov.flag == Flag::KS)][side];
+                let bits = ROOK_MOVES[usize::from(mov.flag == Flag::KS)][side];
                 self.toggle(side, Piece::ROOK, bits);
             },
             Flag::ENP => {
