@@ -1,6 +1,6 @@
 use super::{
     attacks::Attacks,
-    consts::*,
+    consts::{DBLRANK, Flag, Path, PENRANK, Piece, Right, Side},
     position::{Move, Position},
 };
 

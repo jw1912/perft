@@ -3,7 +3,7 @@ mod attacks;
 pub mod movegen;
 pub mod position;
 
-use consts::*;
+use consts::Right;
 use position::Position;
 use std::time::Instant;
 

@@ -1,6 +1,6 @@
 use super::{
-    attacks::*,
-    consts::*,
+    attacks::Attacks,
+    consts::{CM, CR, Flag, Piece, Side},
 };
 
 #[derive(Copy, Clone, Default)]
@@ -23,7 +23,7 @@ impl Position {
     #[inline(always)]
     pub fn toggle(&mut self, c: usize, pc: usize, bit: u64) {
         self.bb[pc] ^= bit;
-        self.bb [c] ^= bit;
+        self.bb[ c] ^= bit;
     }
 
     #[inline(always)]
