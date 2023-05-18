@@ -86,7 +86,7 @@ pub fn parse_fen(fen: &str) -> Position {
     }
 
     // side to move
-    pos.c = vec[1] == "b";
+    pos.side = vec[1] == "b";
 
     // castle rights
     for ch in vec[2].chars() {

@@ -42,20 +42,36 @@ impl Right {
     pub const WKS: u8 = 0b0100;
     pub const BQS: u8 = 0b0010;
     pub const BKS: u8 = 0b0001;
-    pub const SIDE: [u8; 2] = [Self::WKS | Self::WQS, Self::BKS | Self::BQS];
+    pub const SIDE: [u8; 2] = [
+        Self::WKS | Self::WQS,
+        Self::BKS | Self::BQS,
+    ];
+    pub const TABLE: [[u8; 2]; 2] = [
+        [Self::WQS, Self::WKS],
+        [Self::BQS, Self::BKS],
+    ];
 }
 
-// path required to be clear for castling
+// paths required to be clear for castling
 pub struct Path;
 impl Path {
     pub const BD1: u64 = 0x0000_0000_0000_000E;
     pub const FG1: u64 = 0x0000_0000_0000_0060;
     pub const BD8: u64 = 0x0E00_0000_0000_0000;
     pub const FG8: u64 = 0x6000_0000_0000_0000;
+    pub const TABLE: [[u64; 2]; 2] = [
+        [Self::BD1, Self::FG1],
+        [Self::BD8, Self::FG8],
+    ];
 }
 
-// for efficient move making
-pub const ROOK_MOVES: [[u64; 2]; 2] = [[9, 0x0900_0000_0000_0000], [160, 0xA000_0000_0000_0000]];
+// the castling rook move bitboards
+pub const ROOK_MOVES: [[u64; 2]; 2] = [
+    [0x0000_0000_0000_0009, 0x0900_0000_0000_0000],
+    [0x0000_0000_0000_00A0, 0xA000_0000_0000_0000],
+];
+
+// mask off castling rights by square
 pub const CASTLE_MASK: [u8; 64] = init! {idx,
     match idx {
          0 =>  7,
@@ -69,5 +85,9 @@ pub const CASTLE_MASK: [u8; 64] = init! {idx,
 };
 
 // for promotions / double pushes
-pub const PENRANK: [u64; 2] = [0x00FF_0000_0000_0000, 0x0000_0000_0000_FF00];
-pub const DBLRANK: [u64; 2] = [0x0000_0000_FF00_0000, 0x0000_00FF_0000_0000];
+pub struct Rank;
+impl Rank {
+    pub const PEN: [u64; 2] = [0x00FF_0000_0000_0000, 0x0000_0000_0000_FF00];
+    pub const DBL: [u64; 2] = [0x0000_0000_FF00_0000, 0x0000_00FF_0000_0000];
+}
+

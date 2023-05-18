@@ -6,7 +6,7 @@ use super::{
 #[derive(Copy, Clone, Default)]
 pub struct Position {
     pub bb: [u64; 8],
-    pub c: bool,
+    pub side: bool,
     pub enp_sq: u8,
     pub rights: u8,
 }
@@ -26,9 +26,9 @@ fn enp_sq(side: usize, sq: u8) -> u8 {
 
 impl Position {
     #[inline]
-    pub fn toggle(&mut self, c: usize, pc: usize, bit: u64) {
-        self.bb[pc] ^= bit;
-        self.bb[ c] ^= bit;
+    pub fn toggle(&mut self, side: usize, piece: usize, bit: u64) {
+        self.bb[piece] ^= bit;
+        self.bb[side] ^= bit;
     }
 
     #[must_use]
@@ -56,7 +56,7 @@ impl Position {
 
     pub fn make(&mut self, mov: Move) -> bool {
         // extracting move info
-        let side = usize::from(self.c);
+        let side = usize::from(self.side);
         let bb_from = 1 << mov.from;
         let bb_to = 1 << mov.to;
         let captured = if mov.flag & Flag::CAP == 0 {
@@ -66,7 +66,7 @@ impl Position {
         };
 
         // updating state
-        self.c = !self.c;
+        self.side = !self.side;
         self.enp_sq = 0;
         self.rights &= CASTLE_MASK[usize::from(mov.to)] & CASTLE_MASK[usize::from(mov.from)];
 
@@ -74,7 +74,9 @@ impl Position {
         self.toggle(side, usize::from(mov.moved), bb_from | bb_to);
 
         // captures
-        if captured != Piece::EMPTY { self.toggle(side ^ 1, captured, bb_to) }
+        if captured != Piece::EMPTY {
+            self.toggle(side ^ 1, captured, bb_to);
+        }
 
         // more complex moves
         match mov.flag {

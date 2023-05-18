@@ -1,6 +1,6 @@
 use super::{
     attacks::Attacks,
-    consts::{DBLRANK, Flag, Path, PENRANK, Piece, Right, Side},
+    consts::{Flag, Path, Piece, Rank, Right, Side},
     position::{Move, Position},
 };
 
@@ -43,7 +43,7 @@ impl Position {
     #[must_use]
     pub fn gen(&self) -> MoveList {
         let mut moves = MoveList::default();
-        let side = usize::from(self.c);
+        let side = usize::from(self.side);
 
         // reused bitboards
         let occ = self.bb[0] | self.bb[1];
@@ -52,8 +52,11 @@ impl Position {
         let pawns = self.bb[Piece::PAWN] & boys;
 
         // castling
-        if self.rights & Right::SIDE[side] > 0 && !self.is_sq_att(4 + 56 * usize::from(side == Side::BLACK), side, occ) {
-            self.castles(&mut moves, occ);
+        if self.rights & Right::SIDE[side] > 0 {
+            let king_sq = 4 + 56 * usize::from(side == Side::BLACK);
+            if !self.is_sq_att(king_sq, side, occ) {
+                self.castles(&mut moves, occ);
+            }
         }
 
         // pawns
@@ -78,21 +81,28 @@ impl Position {
     }
 
     fn castles(&self, moves: &mut MoveList, occ: u64) {
-        if self.c {
-            if self.rights & Right::BQS > 0 && occ & Path::BD8 == 0 && !self.is_sq_att(59, Side::BLACK, occ) {
+        if self.side {
+            if self.can_castle::<{ Side::BLACK }, 0>(occ, 59) {
                 moves.push(60, 58, Flag::QS, Piece::KING);
             }
-            if self.rights & Right::BKS > 0 && occ & Path::FG8 == 0 && !self.is_sq_att(61, Side::BLACK, occ) {
+            if self.can_castle::<{ Side::BLACK }, 1>(occ, 61) {
                 moves.push(60, 62, Flag::KS, Piece::KING);
             }
         } else {
-            if self.rights & Right::WQS > 0 && occ & Path::BD1 == 0 && !self.is_sq_att( 3, Side::WHITE, occ) {
+            if self.can_castle::<{ Side::WHITE }, 0>(occ,  3) {
                 moves.push( 4,  2, Flag::QS, Piece::KING);
             }
-            if self.rights & Right::WKS > 0 && occ & Path::FG1 == 0 && !self.is_sq_att( 5, Side::WHITE, occ) {
+            if self.can_castle::<{ Side::WHITE }, 1>(occ,  5) {
                 moves.push( 4,  6, Flag::KS, Piece::KING);
             }
         }
+    }
+
+    #[inline]
+    fn can_castle<const SIDE: usize, const KS: usize>(&self, occ: u64, sq: usize) -> bool {
+        self.rights & Right::TABLE[SIDE][KS] > 0
+            && occ & Path::TABLE[SIDE][KS] == 0
+            && !self.is_sq_att(sq, SIDE, occ)
     }
 }
 
@@ -116,8 +126,8 @@ fn pc_moves<const PC: usize>(moves: &mut MoveList, occ: u64, opps: u64, mut atta
 
 fn pawn_captures(moves: &mut MoveList, mut attackers: u64, opps: u64, c: usize) {
     let (mut from, mut to, mut attacks);
-    let mut promo_attackers = attackers & PENRANK[c];
-    attackers &= !PENRANK[c];
+    let mut promo_attackers = attackers & Rank::PEN[c];
+    attackers &= !Rank::PEN[c];
 
     while attackers > 0 {
         pop_lsb!(from, attackers);
@@ -168,8 +178,8 @@ fn pawn_pushes<const SIDE: usize>(moves: &mut MoveList, occupied: u64, pawns: u6
     let empty = !occupied;
 
     let mut pushable_pawns = shift::<SIDE>(empty) & pawns;
-    let mut promotable_pawns = pushable_pawns & PENRANK[SIDE];
-    pushable_pawns &= !PENRANK[SIDE];
+    let mut promotable_pawns = pushable_pawns & Rank::PEN[SIDE];
+    pushable_pawns &= !Rank::PEN[SIDE];
     while pushable_pawns > 0 {
         pop_lsb!(from, pushable_pawns);
         let to = idx_shift::<SIDE, 8>(from);
@@ -186,7 +196,7 @@ fn pawn_pushes<const SIDE: usize>(moves: &mut MoveList, occupied: u64, pawns: u6
     }
 
     let mut dbl_pushable_pawns =
-        shift::<SIDE>(shift::<SIDE>(empty & DBLRANK[SIDE]) & empty) & pawns;
+        shift::<SIDE>(shift::<SIDE>(empty & Rank::DBL[SIDE]) & empty) & pawns;
     while dbl_pushable_pawns > 0 {
         pop_lsb!(from, dbl_pushable_pawns);
         moves.push(from, idx_shift::<SIDE, 16>(from), Flag::DBL, Piece::PAWN);
