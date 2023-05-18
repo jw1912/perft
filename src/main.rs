@@ -54,8 +54,15 @@ pub fn perft(pos: &Position, depth: u8) -> u64 {
     let moves = pos.gen();
     for m_idx in 0..moves.len {
         tmp = *pos;
-        if tmp.make(moves.list[m_idx]) { continue }
-        positions += if depth > 1 { perft(&tmp, depth - 1) } else { 1 };
+        if tmp.make(moves.list[m_idx]) {
+            continue;
+        }
+
+        positions += if depth > 1 {
+            perft(&tmp, depth - 1)
+        } else {
+            1
+        };
     }
     positions
 }

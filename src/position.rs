@@ -34,11 +34,11 @@ impl Position {
     #[must_use]
     #[inline]
     pub fn is_sq_att(&self, sq: usize, side: usize, occ: u64) -> bool {
-        ( (Attacks::KNIGHT[sq] & self.bb[Piece::KNIGHT])
-        | (Attacks::KING  [sq] & self.bb[Piece::KING  ])
+        ( (Attacks::KNIGHT[sq]       & self.bb[Piece::KNIGHT])
+        | (Attacks::KING  [sq]       & self.bb[Piece::KING  ])
         | (Attacks::PAWN  [side][sq] & self.bb[Piece::PAWN  ])
-        | (Attacks::rook  (sq, occ) & (self.bb[Piece::ROOK  ] | self.bb[Piece::QUEEN]))
-        | (Attacks::bishop(sq, occ) & (self.bb[Piece::BISHOP] | self.bb[Piece::QUEEN]))
+        | (Attacks::rook  (sq, occ) & (self.bb[Piece::ROOK  ] ^ self.bb[Piece::QUEEN]))
+        | (Attacks::bishop(sq, occ) & (self.bb[Piece::BISHOP] ^ self.bb[Piece::QUEEN]))
         ) & self.bb[side ^ 1] > 0
     }
 
@@ -58,7 +58,7 @@ impl Position {
         // extracting move info
         let side = usize::from(self.side);
         let bb_from = 1 << mov.from;
-        let bb_to = 1 << mov.to;
+        let bb_to   = 1 << mov.to;
         let captured = if mov.flag & Flag::CAP == 0 {
             Piece::EMPTY
         } else {
@@ -71,7 +71,7 @@ impl Position {
         self.rights &= CASTLE_MASK[usize::from(mov.to)] & CASTLE_MASK[usize::from(mov.from)];
 
         // move piece
-        self.toggle(side, usize::from(mov.moved), bb_from | bb_to);
+        self.toggle(side, usize::from(mov.moved), bb_from ^ bb_to);
 
         // captures
         if captured != Piece::EMPTY {
@@ -90,8 +90,9 @@ impl Position {
                 self.toggle(side ^ 1, Piece::PAWN, bits);
             },
             Flag::NPR.. => {
+                let promo = usize::from((mov.flag & 3) + 3);
                 self.bb[Piece::PAWN] ^= bb_to;
-                self.bb[usize::from((mov.flag & 3) + 3)] ^= bb_to;
+                self.bb[promo] ^= bb_to;
             }
             _ => {}
         }

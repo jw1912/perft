@@ -16,12 +16,6 @@ pub struct MoveList {
     pub len: usize,
 }
 
-impl Default for MoveList {
-    fn default() -> Self {
-        Self { list: [Move::default(); 252], len: 0 }
-    }
-}
-
 impl MoveList {
     #[inline]
     fn push(&mut self, from: u8, to: u8, flag: u8, mpc: usize) {
@@ -42,13 +36,13 @@ fn encode<const PC: usize, const FLAG: u8>(moves: &mut MoveList, mut attacks: u6
 impl Position {
     #[must_use]
     pub fn gen(&self) -> MoveList {
-        let mut moves = MoveList::default();
+        let mut moves = MoveList { list: [Move::default(); 252], len: 0 };
         let side = usize::from(self.side);
 
         // reused bitboards
         let occ = self.bb[0] | self.bb[1];
         let boys = self.bb[side];
-        let opps = self.bb[side ^ 1];
+        let opps = occ ^ boys;
         let pawns = self.bb[Piece::PAWN] & boys;
 
         // castling

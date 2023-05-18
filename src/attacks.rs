@@ -80,15 +80,14 @@ impl Attacks {
     }
 }
 
-// A file and ~(H file)
 struct File;
 impl File {
     const A: u64 = 0x0101_0101_0101_0101;
     const H: u64 = Self::A << 7;
 }
 
-const EAST: [u64; 64] = init! {sq, (1 << sq) ^ WEST[sq] ^ (0xFF << (sq & 56))};
-const WEST: [u64; 64] = init! {sq, ((1 << sq) - 1) & (0xFF << (sq & 56))};
+const EAST: [u64; 64] = init! {sq, (0xFF << (sq & 56)) ^ (1 << sq) ^ WEST[sq]};
+const WEST: [u64; 64] = init! {sq, (0xFF << (sq & 56)) & ((1 << sq) - 1)};
 const DIAG: u64 = DIAGS[7];
 const DIAGS: [u64; 15] = [
     0x0100_0000_0000_0000,
@@ -121,10 +120,12 @@ struct Lookup;
 impl Lookup {
     const BISHOP: [Mask; 64] = init! {sq,
         let bit = 1 << sq;
+        let file = sq & 7;
+        let rank = sq / 8;
         Mask {
             bit,
-            diag: bit ^ DIAGS[7 + (sq & 7) - (sq >> 3)],
-            anti: bit ^ DIAGS[(sq & 7) + (sq >> 3)].swap_bytes(),
+            diag: bit ^ DIAGS[7 + file - rank],
+            anti: bit ^ DIAGS[    file + rank].swap_bytes(),
             swap: bit.swap_bytes()
         }
     };
