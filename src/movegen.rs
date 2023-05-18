@@ -46,11 +46,8 @@ impl Position {
         let pawns = self.bb[Piece::PAWN] & boys;
 
         // castling
-        if self.rights & Right::SIDE[side] > 0 {
-            let king_sq = 4 + 56 * usize::from(side == Side::BLACK);
-            if !self.is_sq_att(king_sq, side, occ) {
+        if self.rights & Right::SIDE[side] > 0 && !self.is_sq_att(4 + 56 * side, side, occ) {
                 self.castles(&mut moves, occ);
-            }
         }
 
         // pawns
@@ -65,11 +62,11 @@ impl Position {
         pawn_captures(&mut moves, pawns, opps, side);
 
         // other pieces
-        pc_moves::<{ Piece::KNIGHT }>(&mut moves, occ, opps, boys & self.bb[Piece::KNIGHT]);
-        pc_moves::<{ Piece::BISHOP }>(&mut moves, occ, opps, boys & self.bb[Piece::BISHOP]);
-        pc_moves::<{ Piece::ROOK   }>(&mut moves, occ, opps, boys & self.bb[Piece::ROOK  ]);
-        pc_moves::<{ Piece::QUEEN  }>(&mut moves, occ, opps, boys & self.bb[Piece::QUEEN ]);
-        pc_moves::<{ Piece::KING   }>(&mut moves, occ, opps, boys & self.bb[Piece::KING  ]);
+        piece_moves::<{ Piece::KNIGHT }>(&mut moves, occ, opps, boys & self.bb[Piece::KNIGHT]);
+        piece_moves::<{ Piece::BISHOP }>(&mut moves, occ, opps, boys & self.bb[Piece::BISHOP]);
+        piece_moves::<{ Piece::ROOK   }>(&mut moves, occ, opps, boys & self.bb[Piece::ROOK  ]);
+        piece_moves::<{ Piece::QUEEN  }>(&mut moves, occ, opps, boys & self.bb[Piece::QUEEN ]);
+        piece_moves::<{ Piece::KING   }>(&mut moves, occ, opps, boys & self.bb[Piece::KING  ]);
 
         moves
     }
@@ -100,7 +97,7 @@ impl Position {
     }
 }
 
-fn pc_moves<const PC: usize>(moves: &mut MoveList, occ: u64, opps: u64, mut attackers: u64) {
+fn piece_moves<const PC: usize>(moves: &mut MoveList, occ: u64, opps: u64, mut attackers: u64) {
     let mut from;
     let mut attacks;
     while attackers > 0 {
