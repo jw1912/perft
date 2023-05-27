@@ -40,10 +40,7 @@ impl Position {
     #[must_use]
     #[inline]
     pub fn get_pc(&self, bit: u64) -> usize {
-        for pc in Piece::PAWN..=Piece::KING {
-            if bit & self.bb[pc] > 0 { return pc }
-        }
-        0
+        self.bb.iter().skip(2).position(|bb| bit & bb > 0).unwrap_or(usize::MAX - 1).wrapping_add(2)
     }
 
     pub fn make(&mut self, mov: Move) -> bool {
