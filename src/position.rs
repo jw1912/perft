@@ -19,11 +19,6 @@ pub struct Move {
     pub moved: u8,
 }
 
-#[inline]
-fn enp_sq(side: usize, sq: u8) -> u8 {
-    sq.wrapping_add([8u8.wrapping_neg(), 8u8][side])
-}
-
 impl Position {
     #[inline]
     pub fn toggle(&mut self, side: usize, piece: usize, bit: u64) {
@@ -80,13 +75,13 @@ impl Position {
 
         // more complex moves
         match mov.flag {
-            Flag::DBL => self.enp_sq = enp_sq(side, mov.to),
+            Flag::DBL => self.enp_sq = mov.to ^ 8,
             Flag::KS | Flag::QS => {
                 let bits = ROOK_MOVES[usize::from(mov.flag == Flag::KS)][side];
                 self.toggle(side, Piece::ROOK, bits);
             },
             Flag::ENP => {
-                let bits = 1 << enp_sq(side, mov.to);
+                let bits = 1 << (mov.to ^ 8);
                 self.toggle(side ^ 1, Piece::PAWN, bits);
             },
             Flag::NPR.. => {
