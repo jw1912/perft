@@ -40,13 +40,10 @@ impl Position {
     #[must_use]
     #[inline]
     pub fn get_pc(&self, bit: u64) -> usize {
-        usize::from(
-            (self.bb[Piece::KNIGHT] | self.bb[Piece::ROOK]) & bit > 0
-        ) | (2 * usize::from(
-            (self.bb[Piece::KNIGHT] | self.bb[Piece::PAWN] | self.bb[Piece::QUEEN]) & bit > 0)
-        ) | (4 * usize::from(
-            (self.bb[Piece::BISHOP] | self.bb[Piece::ROOK] | self.bb[Piece::QUEEN]) & bit > 0)
-        )
+        for pc in Piece::PAWN..=Piece::KING {
+            if bit & self.bb[pc] > 0 { return pc }
+        }
+        0
     }
 
     pub fn make(&mut self, mov: Move) -> bool {
