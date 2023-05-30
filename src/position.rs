@@ -29,9 +29,9 @@ impl Position {
     #[must_use]
     #[inline]
     pub fn is_sq_att(&self, sq: usize, side: usize, occ: u64) -> bool {
-        ( (Attacks::KNIGHT[sq]       & self.bb[Piece::KNIGHT])
-        | (Attacks::KING  [sq]       & self.bb[Piece::KING  ])
-        | (Attacks::PAWN  [side][sq] & self.bb[Piece::PAWN  ])
+        ( (Attacks::knight(sq)       & self.bb[Piece::KNIGHT])
+        | (Attacks::king  (sq)       & self.bb[Piece::KING  ])
+        | (Attacks::pawn  (side, sq) & self.bb[Piece::PAWN  ])
         | (Attacks::rook  (sq, occ) & (self.bb[Piece::ROOK  ] ^ self.bb[Piece::QUEEN]))
         | (Attacks::bishop(sq, occ) & (self.bb[Piece::BISHOP] ^ self.bb[Piece::QUEEN]))
         ) & self.bb[side ^ 1] > 0
