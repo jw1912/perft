@@ -82,9 +82,9 @@ pub fn parse_fen(fen: &str) -> Position {
         } else if ('1'..='8').contains(&ch) {
             col += ch.to_string().parse::<i16>().unwrap_or(0);
         } else {
-            let idx: usize = ['P', 'N', 'B', 'R', 'Q', 'K', 'p', 'n', 'b', 'r', 'q', 'k']
-                .iter()
-                .position(|&element| element == ch)
+            let idx: usize = "PNBRQKpnbrqk"
+                .chars()
+                .position(|element| element == ch)
                 .unwrap_or(6);
             let colour = usize::from(idx > 5);
             pos.toggle(colour, idx + 2 - 6 * colour, 1 << (8 * row + col));
