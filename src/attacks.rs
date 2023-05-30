@@ -62,7 +62,7 @@ impl Attacks {
 
         let flip = ((occ >> file) & File::A).wrapping_mul(DIAG);
         let file_sq = (flip >> 57) & 0x3F;
-        let files = LOOKUP.file[rank][file_sq as usize] >> (7 - file);
+        let files = LOOKUP.file[rank][file_sq as usize] << file;
 
         let rank_shift = sq - file;
         let rank_sq = (occ >> (rank_shift + 1)) & 0x3F;
@@ -183,7 +183,7 @@ const FILE: [[u64; 64]; 8] = {
     while rank < 8 {
         ret[rank] = init! {occ, {
             let ranks = RANK[7 - rank][occ];
-            ranks.wrapping_mul(DIAG) & File::H
+            (ranks.wrapping_mul(DIAG) & File::H) >> 7
         }};
         rank += 1;
     }
