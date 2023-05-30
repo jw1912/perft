@@ -12,23 +12,7 @@ macro_rules! init {
     }};
 }
 
-pub struct Attacks {
-    pawn: [[u64; 64]; 2],
-    knight: [u64; 64],
-    king: [u64; 64],
-    bishop: [Mask; 64],
-    rank: [[u64; 64]; 8],
-    file: [[u64; 64]; 8],
-}
-
-static LOOKUP: Attacks = Attacks {
-    pawn: Lookup::PAWN,
-    knight: Lookup::KNIGHT,
-    king: Lookup::KING,
-    bishop: Lookup::BISHOP,
-    rank: Lookup::RANK,
-    file: Lookup::FILE,
-};
+pub struct Attacks;
 
 impl Attacks {
     #[inline]
@@ -129,64 +113,79 @@ struct Mask {
     swap: u64,
 }
 
-struct Lookup;
-impl Lookup {
-    const PAWN: [[u64; 64]; 2] = [
-        init! {sq, (((1 << sq) & !File::A) << 7) | (((1 << sq) & !File::H) << 9)},
-        init! {sq, (((1 << sq) & !File::A) >> 9) | (((1 << sq) & !File::H) >> 7)},
-    ];
-
-    const KNIGHT: [u64; 64] = init! {sq, {
-        let n = 1 << sq;
-        let h1 = ((n >> 1) & 0x7f7f_7f7f_7f7f_7f7f) | ((n << 1) & 0xfefe_fefe_fefe_fefe);
-        let h2 = ((n >> 2) & 0x3f3f_3f3f_3f3f_3f3f) | ((n << 2) & 0xfcfc_fcfc_fcfc_fcfc);
-        (h1 << 16) | (h1 >> 16) | (h2 << 8) | (h2 >> 8)
-    }};
-
-    const KING: [u64; 64] = init! {sq, {
-        let mut k = 1 << sq;
-        k |= (k << 8) | (k >> 8);
-        k |= ((k & !File::A) >> 1) | ((k & !File::H) << 1);
-        k ^ (1 << sq)
-    }};
-
-    const BISHOP: [Mask; 64] = init! {sq,
-        let bit = 1 << sq;
-        let file = sq & 7;
-        let rank = sq / 8;
-        Mask {
-            bit,
-            diag: bit ^ DIAGS[7 + file - rank],
-            anti: bit ^ DIAGS[    file + rank].swap_bytes(),
-            swap: bit.swap_bytes()
-        }
-    };
-
-    const RANK: [[u64; 64]; 8] = {
-        let mut ret = [[0; 64]; 8];
-        let mut file = 0;
-        while file < 8 {
-            ret[file] = init! {occ, {
-                let mask = (occ << 1) as u64;
-                let east = ((EAST[file] & mask) | (1 << 63)).trailing_zeros() as usize;
-                let west = ((WEST[file] & mask) | 1).leading_zeros() as usize ^ 63;
-                EAST[file] ^ EAST[east] | WEST[file] ^ WEST[west]
-            }};
-            file += 1;
-        }
-        ret
-    };
-
-    const FILE: [[u64; 64]; 8] = {
-        let mut ret = [[0; 64]; 8];
-        let mut rank = 0;
-        while rank < 8 {
-            ret[rank] = init! {occ, {
-                let ranks = Self::RANK[7 - rank][occ];
-                ranks.wrapping_mul(DIAG) & File::H
-            }};
-            rank += 1;
-        }
-        ret
-    };
+struct Lookup {
+    pawn: [[u64; 64]; 2],
+    knight: [u64; 64],
+    king: [u64; 64],
+    bishop: [Mask; 64],
+    rank: [[u64; 64]; 8],
+    file: [[u64; 64]; 8],
 }
+
+static LOOKUP: Lookup = Lookup {
+    pawn: PAWN,
+    knight: KNIGHT,
+    king: KING,
+    bishop: BISHOP,
+    rank: RANK,
+    file: FILE,
+};
+
+const PAWN: [[u64; 64]; 2] = [
+    init! {sq, (((1 << sq) & !File::A) << 7) | (((1 << sq) & !File::H) << 9)},
+    init! {sq, (((1 << sq) & !File::A) >> 9) | (((1 << sq) & !File::H) >> 7)},
+];
+
+const KNIGHT: [u64; 64] = init! {sq, {
+    let n = 1 << sq;
+    let h1 = ((n >> 1) & 0x7f7f_7f7f_7f7f_7f7f) | ((n << 1) & 0xfefe_fefe_fefe_fefe);
+    let h2 = ((n >> 2) & 0x3f3f_3f3f_3f3f_3f3f) | ((n << 2) & 0xfcfc_fcfc_fcfc_fcfc);
+    (h1 << 16) | (h1 >> 16) | (h2 << 8) | (h2 >> 8)
+}};
+
+const KING: [u64; 64] = init! {sq, {
+    let mut k = 1 << sq;
+    k |= (k << 8) | (k >> 8);
+    k |= ((k & !File::A) >> 1) | ((k & !File::H) << 1);
+    k ^ (1 << sq)
+}};
+
+const BISHOP: [Mask; 64] = init! {sq,
+    let bit = 1 << sq;
+    let file = sq & 7;
+    let rank = sq / 8;
+    Mask {
+        bit,
+        diag: bit ^ DIAGS[7 + file - rank],
+        anti: bit ^ DIAGS[    file + rank].swap_bytes(),
+        swap: bit.swap_bytes()
+    }
+};
+
+const RANK: [[u64; 64]; 8] = {
+    let mut ret = [[0; 64]; 8];
+    let mut file = 0;
+    while file < 8 {
+        ret[file] = init! {occ, {
+            let mask = (occ << 1) as u64;
+            let east = ((EAST[file] & mask) | (1 << 63)).trailing_zeros() as usize;
+            let west = ((WEST[file] & mask) | 1).leading_zeros() as usize ^ 63;
+            EAST[file] ^ EAST[east] | WEST[file] ^ WEST[west]
+        }};
+        file += 1;
+    }
+    ret
+};
+
+const FILE: [[u64; 64]; 8] = {
+    let mut ret = [[0; 64]; 8];
+    let mut rank = 0;
+    while rank < 8 {
+        ret[rank] = init! {occ, {
+            let ranks = RANK[7 - rank][occ];
+            ranks.wrapping_mul(DIAG) & File::H
+        }};
+        rank += 1;
+    }
+    ret
+};
