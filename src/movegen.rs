@@ -47,7 +47,7 @@ impl Position {
 
         // castling
         if self.rights & Right::SIDE[side] > 0 && !self.is_sq_att(4 + 56 * side, side, occ) {
-                self.castles(&mut moves, occ);
+            self.castles(&mut moves, occ);
         }
 
         // pawns
@@ -103,11 +103,11 @@ fn piece_moves<const PC: usize>(moves: &mut MoveList, occ: u64, opps: u64, mut a
     while attackers > 0 {
         pop_lsb!(from, attackers);
         attacks = match PC {
-            Piece::KNIGHT => Attacks::KNIGHT[usize::from(from)],
+            Piece::KNIGHT => Attacks::knight(usize::from(from)),
             Piece::BISHOP => Attacks::bishop(usize::from(from), occ),
             Piece::ROOK   => Attacks::rook  (usize::from(from), occ),
             Piece::QUEEN  => Attacks::queen (usize::from(from), occ),
-            Piece::KING   => Attacks::KING  [usize::from(from)],
+            Piece::KING   => Attacks::king  (usize::from(from)),
             _ => 0,
         };
         encode::<PC, { Flag::CAP   }>(moves, attacks & opps, from);
@@ -122,13 +122,13 @@ fn pawn_captures(moves: &mut MoveList, mut attackers: u64, opps: u64, c: usize) 
 
     while attackers > 0 {
         pop_lsb!(from, attackers);
-        attacks = Attacks::PAWN[c][usize::from(from)] & opps;
+        attacks = Attacks::pawn(c, usize::from(from)) & opps;
         encode::<{ Piece::PAWN }, { Flag::CAP }>(moves, attacks, from);
     }
 
     while promo_attackers > 0 {
         pop_lsb!(from, promo_attackers);
-        attacks = Attacks::PAWN[c][usize::from(from)] & opps;
+        attacks = Attacks::pawn(c, usize::from(from)) & opps;
         while attacks > 0 {
             pop_lsb!(to, attacks);
             moves.push(from, to, Flag::QPC, Piece::PAWN);
@@ -140,7 +140,7 @@ fn pawn_captures(moves: &mut MoveList, mut attackers: u64, opps: u64, c: usize) 
 }
 
 fn en_passants(moves: &mut MoveList, pawns: u64, sq: u8, c: usize) {
-    let mut attackers = Attacks::PAWN[c ^ 1][usize::from(sq)] & pawns;
+    let mut attackers = Attacks::pawn(c ^ 1, usize::from(sq)) & pawns;
     let mut from;
     while attackers > 0 {
         pop_lsb!(from, attackers);

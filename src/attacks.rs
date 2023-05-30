@@ -12,32 +12,45 @@ macro_rules! init {
     }};
 }
 
-pub struct Attacks;
+pub struct Attacks {
+    pawn: [[u64; 64]; 2],
+    knight: [u64; 64],
+    king: [u64; 64],
+    bishop: [Mask; 64],
+    rank: [[u64; 64]; 8],
+    file: [[u64; 64]; 8],
+}
+
+static LOOKUP: Attacks = Attacks {
+    pawn: Lookup::PAWN,
+    knight: Lookup::KNIGHT,
+    king: Lookup::KING,
+    bishop: Lookup::BISHOP,
+    rank: Lookup::RANK,
+    file: Lookup::FILE,
+};
+
 impl Attacks {
-    pub const PAWN: [[u64; 64]; 2] = [
-        init! {sq, (((1 << sq) & !File::A) << 7) | (((1 << sq) & !File::H) << 9)},
-        init! {sq, (((1 << sq) & !File::A) >> 9) | (((1 << sq) & !File::H) >> 7)},
-    ];
+    #[inline]
+    pub fn pawn(side: usize, sq: usize) -> u64 {
+        LOOKUP.pawn[side][sq]
+    }
 
-    pub const KNIGHT: [u64; 64] = init! {sq, {
-        let n = 1 << sq;
-        let h1 = ((n >> 1) & 0x7f7f_7f7f_7f7f_7f7f) | ((n << 1) & 0xfefe_fefe_fefe_fefe);
-        let h2 = ((n >> 2) & 0x3f3f_3f3f_3f3f_3f3f) | ((n << 2) & 0xfcfc_fcfc_fcfc_fcfc);
-        (h1 << 16) | (h1 >> 16) | (h2 << 8) | (h2 >> 8)
-    }};
+    #[inline]
+    pub fn knight(sq: usize) -> u64 {
+        LOOKUP.knight[sq]
+    }
 
-    pub const KING: [u64; 64] = init! {sq, {
-        let mut k = 1 << sq;
-        k |= (k << 8) | (k >> 8);
-        k |= ((k & !File::A) >> 1) | ((k & !File::H) << 1);
-        k ^ (1 << sq)
-    }};
+    #[inline]
+    pub fn king(sq: usize) -> u64 {
+        LOOKUP.king[sq]
+    }
 
     // hyperbola quintessence
     // this gets automatically vectorised when targeting avx or better
     #[inline]
     pub fn bishop(sq: usize, occ: u64) -> u64 {
-        let mask = Lookup::BISHOP[sq];
+        let mask = LOOKUP.bishop[sq];
 
         let mut diag = occ & mask.diag;
         let mut rev1 = diag.swap_bytes();
@@ -65,11 +78,11 @@ impl Attacks {
 
         let flip = ((occ >> file) & File::A).wrapping_mul(DIAG);
         let file_sq = (flip >> 57) & 0x3F;
-        let files = Lookup::FILE[rank][file_sq as usize] >> (7 - file);
+        let files = LOOKUP.file[rank][file_sq as usize] >> (7 - file);
 
         let rank_shift = sq - file;
         let rank_sq = (occ >> (rank_shift + 1)) & 0x3F;
-        let ranks = Lookup::RANK[file][rank_sq as usize] << rank_shift;
+        let ranks = LOOKUP.rank[file][rank_sq as usize] << rank_shift;
 
         ranks | files
     }
@@ -118,6 +131,25 @@ struct Mask {
 
 struct Lookup;
 impl Lookup {
+    const PAWN: [[u64; 64]; 2] = [
+        init! {sq, (((1 << sq) & !File::A) << 7) | (((1 << sq) & !File::H) << 9)},
+        init! {sq, (((1 << sq) & !File::A) >> 9) | (((1 << sq) & !File::H) >> 7)},
+    ];
+
+    const KNIGHT: [u64; 64] = init! {sq, {
+        let n = 1 << sq;
+        let h1 = ((n >> 1) & 0x7f7f_7f7f_7f7f_7f7f) | ((n << 1) & 0xfefe_fefe_fefe_fefe);
+        let h2 = ((n >> 2) & 0x3f3f_3f3f_3f3f_3f3f) | ((n << 2) & 0xfcfc_fcfc_fcfc_fcfc);
+        (h1 << 16) | (h1 >> 16) | (h2 << 8) | (h2 >> 8)
+    }};
+
+    const KING: [u64; 64] = init! {sq, {
+        let mut k = 1 << sq;
+        k |= (k << 8) | (k >> 8);
+        k |= ((k & !File::A) >> 1) | ((k & !File::H) << 1);
+        k ^ (1 << sq)
+    }};
+
     const BISHOP: [Mask; 64] = init! {sq,
         let bit = 1 << sq;
         let file = sq & 7;
