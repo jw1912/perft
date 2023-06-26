@@ -40,12 +40,10 @@ impl Position {
     #[must_use]
     #[inline]
     pub fn get_pc(&self, bit: u64) -> usize {
-        self.bb
-            .iter()
-            .skip(2) // don't want to consider white/black occupancy bitboards
-            .position(|bb| bit & bb > 0) // find piece, if any
-            .unwrap_or(usize::MAX - 1) // if no piece, return empty
-            .wrapping_add(2) // add back offset due to skip
+        for pc in Piece::PAWN..=Piece::QUEEN {
+            if bit & self.bb[pc] > 0 { return pc }
+        }
+        0
     }
 
     pub fn make(&mut self, mov: Move) -> bool {
