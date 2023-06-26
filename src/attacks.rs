@@ -57,16 +57,12 @@ impl Attacks {
     // files and ranks are mapped to 1st rank and looked up by occupancy
     #[inline]
     pub fn rook(sq: usize, occ: u64) -> u64 {
-        let file = sq & 7;
-        let rank = sq / 8;
-
-        let flip = ((occ >> file) & File::A).wrapping_mul(DIAG);
+        let flip = ((occ >> (sq & 7)) & File::A).wrapping_mul(DIAG);
         let file_sq = (flip >> 57) & 0x3F;
-        let files = LOOKUP.file[rank][file_sq as usize] << file;
+        let files = LOOKUP.file[sq][file_sq as usize];
 
-        let rank_shift = sq - file;
-        let rank_sq = (occ >> (rank_shift + 1)) & 0x3F;
-        let ranks = LOOKUP.rank[file][rank_sq as usize] << rank_shift;
+        let rank_sq = (occ >> RANK_SHIFT[sq]) & 0x3F;
+        let ranks = LOOKUP.rank[sq][rank_sq as usize];
 
         ranks | files
     }
@@ -118,8 +114,8 @@ struct Lookup {
     knight: [u64; 64],
     king: [u64; 64],
     bishop: [Mask; 64],
-    rank: [[u64; 64]; 8],
-    file: [[u64; 64]; 8],
+    rank: [[u64; 64]; 64],
+    file: [[u64; 64]; 64],
 }
 
 static LOOKUP: Lookup = Lookup {
@@ -162,30 +158,18 @@ const BISHOP: [Mask; 64] = init! {sq,
     }
 };
 
-const RANK: [[u64; 64]; 8] = {
-    let mut ret = [[0; 64]; 8];
-    let mut file = 0;
-    while file < 8 {
-        ret[file] = init! {occ, {
+const RANK_SHIFT: [usize; 64] = init! {sq, sq - (sq & 7) + 1};
+
+const RANK: [[u64; 64]; 64] = init! {sq,
+        init! {occ, {
+            let file = sq & 7;
             let mask = (occ << 1) as u64;
             let east = ((EAST[file] & mask) | (1 << 63)).trailing_zeros() as usize;
             let west = ((WEST[file] & mask) | 1).leading_zeros() as usize ^ 63;
-            EAST[file] ^ EAST[east] | WEST[file] ^ WEST[west]
-        }};
-        file += 1;
-    }
-    ret
-};
+            (EAST[file] ^ EAST[east] | WEST[file] ^ WEST[west]) << (sq - file)
+        }}
+    };
 
-const FILE: [[u64; 64]; 8] = {
-    let mut ret = [[0; 64]; 8];
-    let mut rank = 0;
-    while rank < 8 {
-        ret[rank] = init! {occ, {
-            let ranks = RANK[7 - rank][occ];
-            (ranks.wrapping_mul(DIAG) & File::H) >> 7
-        }};
-        rank += 1;
-    }
-    ret
+const FILE: [[u64; 64]; 64] = init! {sq,
+    init! {occ, (RANK[7 - sq / 8][occ].wrapping_mul(DIAG) & File::H) >> (7 - (sq & 7))}
 };
