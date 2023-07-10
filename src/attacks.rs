@@ -173,14 +173,14 @@ const BISHOP: [Mask; 64] = init! {sq,
 const RANK_SHIFT: [usize; 64] = init! {sq, sq - (sq & 7) + 1};
 
 const RANK: [[u64; 64]; 64] = init! {sq,
-        init! {occ, {
-            let file = sq & 7;
-            let mask = (occ << 1) as u64;
-            let east = ((EAST[file] & mask) | (1 << 63)).trailing_zeros() as usize;
-            let west = ((WEST[file] & mask) | 1).leading_zeros() as usize ^ 63;
-            (EAST[file] ^ EAST[east] | WEST[file] ^ WEST[west]) << (sq - file)
-        }}
-    };
+    init! {occ, {
+        let file = sq & 7;
+        let mask = (occ << 1) as u64;
+        let east = ((EAST[file] & mask) | (1 << 63)).trailing_zeros() as usize;
+        let west = ((WEST[file] & mask) | 1).leading_zeros() as usize ^ 63;
+        (EAST[file] ^ EAST[east] | WEST[file] ^ WEST[west]) << (sq - file)
+    }}
+};
 
 const FILE: [[u64; 64]; 64] = init! {sq,
     init! {occ, (RANK[7 - sq / 8][occ].wrapping_mul(DIAG) & File::H) >> (7 - (sq & 7))}
