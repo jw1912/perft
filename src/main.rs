@@ -28,7 +28,7 @@ fn main() {
         println!("Position: {fen}");
 
         let now = Instant::now();
-        let count = perft::<false>(&pos, d);
+        let count = perft::<false, false>(&pos, d);
         total += count;
         assert_eq!(count, exp);
 
@@ -49,21 +49,22 @@ fn main() {
 }
 
 #[must_use]
-pub fn perft<const ROOT: bool>(pos: &Position, depth: u8) -> u64 {
+pub fn perft<const ROOT: bool, const BULK: bool>(pos: &Position, depth: u8) -> u64 {
     let moves = pos.gen();
 
-    if !ROOT && depth == 1 {
+    if BULK && !ROOT && depth == 1 {
         return moves.len as u64;
     }
 
     let mut tmp;
     let mut positions = 0;
+    let leaf = depth == 1;
 
     for m_idx in 0..moves.len {
         tmp = *pos;
         tmp.make(moves.list[m_idx]);
 
-        let num = if ROOT {1} else {perft::<false>(&tmp, depth - 1)};
+        let num = if !BULK && leaf {1} else {perft::<false, BULK>(&tmp, depth - 1)};
         positions += num;
 
         if ROOT {
