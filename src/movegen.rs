@@ -93,7 +93,7 @@ impl Position {
             self.pawn_pushes::<{ Side::WHITE }, true >(moves, pinned_pawns, pawn_check_mask);
         } else {
             self.pawn_pushes::<{ Side::BLACK }, false>(moves, free_pawns  , pawn_check_mask);
-            self.pawn_pushes::<{ Side::WHITE }, true >(moves, pinned_pawns, pawn_check_mask);
+            self.pawn_pushes::<{ Side::BLACK }, true >(moves, pinned_pawns, pawn_check_mask);
         }
         if self.enp_sq > 0 {
             self.en_passants(moves, pawns);
