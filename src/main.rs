@@ -22,12 +22,13 @@ const POSITIONS: [(&str, u8, u64); 5] = [
 fn main() {
     let initial = Instant::now();
     let mut total: u64 = 0;
+
     for (fen, d, exp) in POSITIONS {
         let pos = parse_fen(fen);
         println!("Position: {fen}");
 
         let now = Instant::now();
-        let count = perft::<true>(&pos, d);
+        let count = perft::<false>(&pos, d);
         total += count;
         assert_eq!(count, exp);
 
@@ -49,17 +50,27 @@ fn main() {
 
 #[must_use]
 pub fn perft<const ROOT: bool>(pos: &Position, depth: u8) -> u64 {
+    let moves = pos.gen();
+
+    if !ROOT && depth == 1 {
+        return moves.len as u64;
+    }
+
     let mut tmp;
     let mut positions = 0;
-    let moves = pos.gen();
+
     for m_idx in 0..moves.len {
         tmp = *pos;
         tmp.make(moves.list[m_idx]);
 
-        let num = if depth > 1 { perft::<false>(&tmp, depth - 1) } else { 1 };
+        let num = if ROOT {1} else {perft::<false>(&tmp, depth - 1)};
         positions += num;
-        if ROOT { println!("{}: {num}", moves.list[m_idx].to_uci())}
+
+        if ROOT {
+            println!("{}: {num}", moves.list[m_idx].to_uci());
+        }
     }
+
     positions
 }
 

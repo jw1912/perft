@@ -277,8 +277,9 @@ impl Position {
             let mov = Move { from, to: self.enp_sq, flag: Flag::ENP, moved: Piece::PAWN as u8 };
             tmp.make(mov);
             let king = (tmp.bb[Piece::KING] & tmp.opps()).trailing_zeros() as usize;
-            if !self.is_square_attacked(king, usize::from(!tmp.side), tmp.occ()) {
-                moves.push(from, self.enp_sq, Flag::ENP, Piece::PAWN);
+            if !tmp.is_square_attacked(king, usize::from(!tmp.side), tmp.occ()) {
+                moves.list[moves.len] = mov;
+                moves.len += 1;
             }
         }
     }
