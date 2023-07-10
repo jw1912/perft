@@ -79,12 +79,11 @@ pub fn perft<const ROOT: bool, const BULK: bool>(pos: &Position, depth: u8) -> u
         return moves.len as u64;
     }
 
-    let mut tmp;
     let mut positions = 0;
     let leaf = depth == 1;
 
     for m_idx in 0..moves.len {
-        tmp = *pos;
+        let mut tmp = *pos;
         tmp.make(moves.list[m_idx]);
 
         let num = if !BULK && leaf {

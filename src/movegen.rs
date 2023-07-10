@@ -5,8 +5,8 @@ use super::{
 };
 
 macro_rules! pop_lsb {
-    ($idx:expr, $x:expr) => {
-        $idx = $x.trailing_zeros() as u8;
+    ($idx:ident, $x:expr) => {
+        let $idx = $x.trailing_zeros() as u8;
         $x &= $x - 1
     };
 }
@@ -26,9 +26,9 @@ impl MoveList {
 
 #[inline]
 fn encode<const PC: usize, const FLAG: u8>(moves: &mut MoveList, mut attacks: u64, from: u8) {
-    let mut to;
     while attacks > 0 {
         pop_lsb!(to, attacks);
+
         moves.push(from, to, FLAG, PC);
     }
 }
@@ -46,6 +46,7 @@ impl Position {
         let king_sq = self.king_index();
 
         self.king_moves(&mut moves);
+
         if checkers == 0 {
             self.gen_pnbrq(&mut moves, u64::MAX, u64::MAX, pinned);
             self.castles(&mut moves, self.occ());
@@ -59,7 +60,6 @@ impl Position {
     }
 
     fn king_moves(&self, moves: &mut MoveList) {
-        let mut to;
         let king_sq = self.king_index();
         let attacks = Attacks::king(king_sq);
         let side = self.stm();
@@ -69,6 +69,7 @@ impl Position {
         let mut caps = attacks & self.opps();
         while caps > 0 {
             pop_lsb!(to, caps);
+
             if !self.is_square_attacked(usize::from(to), side, no_king) {
                 moves.push(king_sq as u8, to, Flag::CAP, Piece::KING);
             }
@@ -77,6 +78,7 @@ impl Position {
         let mut quiets = attacks & !occ;
         while quiets > 0 {
             pop_lsb!(to, quiets);
+
             if !self.is_square_attacked(usize::from(to), side, no_king) {
                 moves.push(king_sq as u8, to, Flag::QUIET, Piece::KING);
             }
@@ -98,11 +100,14 @@ impl Position {
             self.pawn_pushes::<{ Side::BLACK }, false>(moves, free_pawns, free);
             self.pawn_pushes::<{ Side::BLACK }, true>(moves, pinned_pawns, free);
         }
+
         if self.enp_sq() > 0 {
             self.en_passants(moves, pawns);
         }
+
         self.pawn_captures::<false>(moves, free_pawns, checkers);
         self.pawn_captures::<true>(moves, pinned_pawns, checkers);
+
         self.piece_moves::<{ Piece::KNIGHT }>(moves, check_mask, pinned);
         self.piece_moves::<{ Piece::BISHOP }>(moves, check_mask, pinned);
         self.piece_moves::<{ Piece::ROOK }>(moves, check_mask, pinned);
@@ -152,9 +157,9 @@ impl Position {
         let opps = self.opps();
         let rq = self.piece(Piece::QUEEN) | self.piece(Piece::ROOK);
         let bq = self.piece(Piece::QUEEN) | self.piece(Piece::BISHOP);
+
         let mut pinned = 0;
 
-        let mut sq;
         let mut pinners = Attacks::xray_rook(kidx, occ, boys) & opps & rq;
         while pinners > 0 {
             pop_lsb!(sq, pinners);
@@ -185,22 +190,24 @@ impl Position {
         let occ = self.occ();
         let king_sq = self.king_index();
 
-        let mut from;
-        let mut attacks;
         while attackers > 0 {
             pop_lsb!(from, attackers);
-            attacks = match PC {
+
+            let mut attacks = match PC {
                 Piece::KNIGHT => Attacks::knight(usize::from(from)),
                 Piece::BISHOP => Attacks::bishop(usize::from(from), occ),
                 Piece::ROOK => Attacks::rook(usize::from(from), occ),
                 Piece::QUEEN => Attacks::queen(usize::from(from), occ),
                 Piece::KING => Attacks::king(usize::from(from)),
-                _ => 0,
+                _ => unreachable!(),
             };
+
             attacks &= check_mask;
+
             if PINNED {
                 attacks &= LINE_THROUGH[king_sq][usize::from(from)];
             }
+
             encode::<PC, { Flag::CAP }>(moves, attacks & self.opps(), from);
             encode::<PC, { Flag::QUIET }>(moves, attacks & !occ, from);
         }
@@ -212,10 +219,6 @@ impl Position {
         mut attackers: u64,
         checkers: u64,
     ) {
-        let mut from;
-        let mut to;
-        let mut attacks;
-
         let side = self.stm();
         let opps = self.opps();
         let king_sq = self.king_index();
@@ -224,21 +227,28 @@ impl Position {
 
         while attackers > 0 {
             pop_lsb!(from, attackers);
-            attacks = Attacks::pawn(usize::from(from), side) & opps & checkers;
+
+            let mut attacks = Attacks::pawn(usize::from(from), side) & opps & checkers;
+
             if PINNED {
                 attacks &= LINE_THROUGH[king_sq][usize::from(from)];
             }
+
             encode::<{ Piece::PAWN }, { Flag::CAP }>(moves, attacks, from);
         }
 
         while promo_attackers > 0 {
             pop_lsb!(from, promo_attackers);
-            attacks = Attacks::pawn(usize::from(from), side) & opps & checkers;
+
+            let mut attacks = Attacks::pawn(usize::from(from), side) & opps & checkers;
+
             if PINNED {
                 attacks &= LINE_THROUGH[king_sq][usize::from(from)];
             }
+
             while attacks > 0 {
                 pop_lsb!(to, attacks);
+
                 moves.push(from, to, Flag::QPC, Piece::PAWN);
                 moves.push(from, to, Flag::NPC, Piece::PAWN);
                 moves.push(from, to, Flag::BPC, Piece::PAWN);
@@ -253,16 +263,18 @@ impl Position {
         pawns: u64,
         check_mask: u64,
     ) {
-        let mut from;
         let empty = !self.occ();
         let king_sq = self.king_index();
 
         let mut pushable_pawns = shift::<SIDE>(empty & check_mask) & pawns;
         let mut promotable_pawns = pushable_pawns & Rank::PEN[SIDE];
         pushable_pawns &= !Rank::PEN[SIDE];
+
         while pushable_pawns > 0 {
             pop_lsb!(from, pushable_pawns);
+
             let to = idx_shift::<SIDE, 8>(from);
+
             if !PINNED || (1 << to) & LINE_THROUGH[king_sq][usize::from(from)] > 0 {
                 moves.push(from, to, Flag::QUIET, Piece::PAWN);
             }
@@ -270,7 +282,9 @@ impl Position {
 
         while promotable_pawns > 0 {
             pop_lsb!(from, promotable_pawns);
+
             let to = idx_shift::<SIDE, 8>(from);
+
             if !PINNED || (1 << to) & LINE_THROUGH[king_sq][usize::from(from)] > 0 {
                 moves.push(from, to, Flag::QPR, Piece::PAWN);
                 moves.push(from, to, Flag::NPR, Piece::PAWN);
@@ -281,9 +295,12 @@ impl Position {
 
         let mut dbl_pushable_pawns =
             shift::<SIDE>(shift::<SIDE>(empty & Rank::DBL[SIDE] & check_mask) & empty) & pawns;
+
         while dbl_pushable_pawns > 0 {
             pop_lsb!(from, dbl_pushable_pawns);
+
             let to = idx_shift::<SIDE, 16>(from);
+
             if !PINNED || (1 << to) & LINE_THROUGH[king_sq][usize::from(from)] > 0 {
                 moves.push(from, to, Flag::DBL, Piece::PAWN);
             }
@@ -292,12 +309,14 @@ impl Position {
 
     fn en_passants(&self, moves: &mut MoveList, pawns: u64) {
         let mut attackers = Attacks::pawn(usize::from(self.enp_sq()), self.stm() ^ 1) & pawns;
-        let mut from;
+
         while attackers > 0 {
             pop_lsb!(from, attackers);
+
             let mut tmp = *self;
             let mov = Move::new(from, self.enp_sq(), Flag::ENP, Piece::PAWN as u8);
             tmp.make(mov);
+
             let king = (tmp.piece(Piece::KING) & tmp.opps()).trailing_zeros() as usize;
             if !tmp.is_square_attacked(king, self.stm(), tmp.occ()) {
                 moves.list[moves.len] = mov;
