@@ -1,6 +1,6 @@
 use super::{
     attacks::Attacks,
-    consts::{CASTLE_MASK, Flag, Piece, Right, ROOK_MOVES, Side},
+    consts::{Flag, Piece, Right, Side, CASTLE_MASK, ROOK_MOVES},
 };
 
 #[derive(Copy, Clone, Default)]
@@ -22,13 +22,22 @@ pub struct Move {
 impl Move {
     #[must_use]
     pub fn new(from: u8, to: u8, flag: u8, moved: u8) -> Self {
-        Self { from, to, flag, moved }
+        Self {
+            from,
+            to,
+            flag,
+            moved,
+        }
     }
 
     #[must_use]
     pub fn to_uci(self) -> String {
         let idx_to_sq = |i| format!("{}{}", ((i & 7) + b'a') as char, (i / 8) + 1);
-        let promo = if self.flag & 0b1000 > 0 {["n","b","r","q"][(self.flag & 0b11) as usize]} else {""};
+        let promo = if self.flag & 0b1000 > 0 {
+            ["n", "b", "r", "q"][(self.flag & 0b11) as usize]
+        } else {
+            ""
+        };
         format!("{}{}{}", idx_to_sq(self.from), idx_to_sq(self.to), promo)
     }
 }
@@ -80,12 +89,12 @@ impl Position {
 
     #[must_use]
     pub fn attackers_to_square(&self, sq: usize, side: usize, occ: u64) -> u64 {
-        ( (Attacks::knight(sq)       & self.bb[Piece::KNIGHT])
-        | (Attacks::king  (sq)       & self.bb[Piece::KING])
-        | (Attacks::pawn  (sq, side) & self.bb[Piece::PAWN])
-        | (Attacks::rook  (sq, occ) & (self.bb[Piece::ROOK]   ^ self.bb[Piece::QUEEN]))
-        | (Attacks::bishop(sq, occ) & (self.bb[Piece::BISHOP] ^ self.bb[Piece::QUEEN]))
-        ) & self.bb[side ^ 1]
+        ((Attacks::knight(sq) & self.bb[Piece::KNIGHT])
+            | (Attacks::king(sq) & self.bb[Piece::KING])
+            | (Attacks::pawn(sq, side) & self.bb[Piece::PAWN])
+            | (Attacks::rook(sq, occ) & (self.bb[Piece::ROOK] ^ self.bb[Piece::QUEEN]))
+            | (Attacks::bishop(sq, occ) & (self.bb[Piece::BISHOP] ^ self.bb[Piece::QUEEN])))
+            & self.bb[side ^ 1]
     }
 
     #[must_use]
@@ -96,7 +105,9 @@ impl Position {
     #[must_use]
     pub fn get_pc(&self, bit: u64) -> usize {
         for pc in Piece::PAWN..=Piece::QUEEN {
-            if bit & self.bb[pc] > 0 { return pc }
+            if bit & self.bb[pc] > 0 {
+                return pc;
+            }
         }
         0
     }
@@ -105,14 +116,14 @@ impl Position {
 
     pub fn toggle(&mut self, side: usize, piece: usize, bit: u64) {
         self.bb[piece] ^= bit;
-        self.bb[side]  ^= bit;
+        self.bb[side] ^= bit;
     }
 
     pub fn make(&mut self, mov: Move) {
         // extracting move info
         let side = usize::from(self.stm);
         let bb_from = 1 << mov.from;
-        let bb_to   = 1 << mov.to;
+        let bb_to = 1 << mov.to;
         let captured = if mov.flag & Flag::CAP == 0 {
             Piece::EMPTY
         } else {
@@ -120,10 +131,9 @@ impl Position {
         };
 
         // updating state
-        self.stm    = !self.stm;
+        self.stm = !self.stm;
         self.enp_sq = 0;
-        self.rights &= CASTLE_MASK[usize::from(mov.to)]
-                    &  CASTLE_MASK[usize::from(mov.from)];
+        self.rights &= CASTLE_MASK[usize::from(mov.to)] & CASTLE_MASK[usize::from(mov.from)];
 
         // move piece
         self.toggle(side, usize::from(mov.moved), bb_from ^ bb_to);
@@ -139,15 +149,15 @@ impl Position {
             Flag::KS | Flag::QS => {
                 let bits = ROOK_MOVES[usize::from(mov.flag == Flag::KS)][side];
                 self.toggle(side, Piece::ROOK, bits);
-            },
+            }
             Flag::ENP => {
                 let bits = 1 << (mov.to ^ 8);
                 self.toggle(side ^ 1, Piece::PAWN, bits);
-            },
+            }
             Flag::NPR.. => {
                 let promo = usize::from((mov.flag & 3) + 3);
                 self.bb[Piece::PAWN] ^= bb_to;
-                self.bb[promo]       ^= bb_to;
+                self.bb[promo] ^= bb_to;
             }
             _ => {}
         }

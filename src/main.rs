@@ -2,13 +2,17 @@
 #![allow(clippy::cast_possible_truncation)]
 #![allow(clippy::cast_precision_loss)]
 
-mod consts;
 mod attacks;
+mod consts;
 pub mod movegen;
 pub mod position;
 
-use std::{fs::File, io::{BufRead, BufReader}, time::Instant};
 use position::Position;
+use std::{
+    fs::File,
+    io::{BufRead, BufReader},
+    time::Instant,
+};
 
 struct PerftResult {
     pos: Position,
@@ -26,7 +30,14 @@ impl PerftResult {
         };
 
         for depth in &split[1..] {
-            result.results.push(depth.split_whitespace().nth(1).unwrap_or("0").parse().unwrap_or(0));
+            result.results.push(
+                depth
+                    .split_whitespace()
+                    .nth(1)
+                    .unwrap_or("0")
+                    .parse()
+                    .unwrap_or(0),
+            );
         }
 
         result
@@ -43,7 +54,7 @@ fn main() {
     let initial = Instant::now();
     let mut total: u64 = 0;
 
-    for PerftResult {pos, fen, results} in positions {
+    for PerftResult { pos, fen, results } in positions {
         println!("{fen}");
         for (d, &res) in results.iter().enumerate() {
             let count = perft::<false, true>(&pos, d as u8 + 1);
@@ -76,7 +87,11 @@ pub fn perft<const ROOT: bool, const BULK: bool>(pos: &Position, depth: u8) -> u
         tmp = *pos;
         tmp.make(moves.list[m_idx]);
 
-        let num = if !BULK && leaf {1} else {perft::<false, BULK>(&tmp, depth - 1)};
+        let num = if !BULK && leaf {
+            1
+        } else {
+            perft::<false, BULK>(&tmp, depth - 1)
+        };
         positions += num;
 
         if ROOT {

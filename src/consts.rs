@@ -8,21 +8,21 @@ impl Side {
 
 pub struct Piece;
 impl Piece {
-    pub const  EMPTY: usize = 0;
-    pub const   PAWN: usize = 2;
+    pub const EMPTY: usize = 0;
+    pub const PAWN: usize = 2;
     pub const KNIGHT: usize = 3;
     pub const BISHOP: usize = 4;
-    pub const   ROOK: usize = 5;
-    pub const  QUEEN: usize = 6;
-    pub const   KING: usize = 7;
+    pub const ROOK: usize = 5;
+    pub const QUEEN: usize = 6;
+    pub const KING: usize = 7;
 }
 
 pub struct Flag;
 impl Flag {
     pub const QUIET: u8 = 0;
     pub const DBL: u8 = 1;
-    pub const  KS: u8 = 2;
-    pub const  QS: u8 = 3;
+    pub const KS: u8 = 2;
+    pub const QS: u8 = 3;
     pub const CAP: u8 = 4;
     pub const ENP: u8 = 5;
     pub const NPR: u8 = 8;
@@ -42,10 +42,7 @@ impl Right {
     pub const WKS: u8 = 0b0100;
     pub const BQS: u8 = 0b0010;
     pub const BKS: u8 = 0b0001;
-    pub const TABLE: [[u8; 2]; 2] = [
-        [Self::WQS, Self::WKS],
-        [Self::BQS, Self::BKS],
-    ];
+    pub const TABLE: [[u8; 2]; 2] = [[Self::WQS, Self::WKS], [Self::BQS, Self::BKS]];
 }
 
 // paths required to be clear for castling
@@ -55,10 +52,7 @@ impl Path {
     pub const FG1: u64 = 0x0000_0000_0000_0060;
     pub const BD8: u64 = 0x0E00_0000_0000_0000;
     pub const FG8: u64 = 0x6000_0000_0000_0000;
-    pub const TABLE: [[u64; 2]; 2] = [
-        [Self::BD1, Self::FG1],
-        [Self::BD8, Self::FG8],
-    ];
+    pub const TABLE: [[u64; 2]; 2] = [[Self::BD1, Self::FG1], [Self::BD8, Self::FG8]];
 }
 
 // the castling rook move bitboards
@@ -116,7 +110,7 @@ pub const LINE_THROUGH: [[u64; 64]; 64] = {
 };
 
 const fn in_between(sq1: usize, sq2: usize) -> u64 {
-    const M1: u64   = 0xFFFF_FFFF_FFFF_FFFF;
+    const M1: u64 = 0xFFFF_FFFF_FFFF_FFFF;
     const A2A7: u64 = 0x0001_0101_0101_0100;
     const B2G7: u64 = 0x0040_2010_0804_0200;
     const H1B7: u64 = 0x0002_0408_1020_4080;

@@ -38,15 +38,15 @@ impl Attacks {
 
         let mut diag = occ & mask.diag;
         let mut rev1 = diag.swap_bytes();
-        diag  = diag.wrapping_sub(mask.bit);
-        rev1  = rev1.wrapping_sub(mask.swap);
+        diag = diag.wrapping_sub(mask.bit);
+        rev1 = rev1.wrapping_sub(mask.swap);
         diag ^= rev1.swap_bytes();
         diag &= mask.diag;
 
         let mut anti = occ & mask.anti;
         let mut rev2 = anti.swap_bytes();
-        anti  = anti.wrapping_sub(mask.bit);
-        rev2  = rev2.wrapping_sub(mask.swap);
+        anti = anti.wrapping_sub(mask.bit);
+        rev2 = rev2.wrapping_sub(mask.swap);
         anti ^= rev2.swap_bytes();
         anti &= mask.anti;
 
@@ -207,7 +207,7 @@ pub const fn line_through(i: usize, j: usize) -> u64 {
         return diags;
     }
 
-    let antis = DIAGS[    file + rank].swap_bytes();
+    let antis = DIAGS[file + rank].swap_bytes();
     if antis & sq > 0 {
         return antis;
     }
