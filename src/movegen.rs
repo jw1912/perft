@@ -45,7 +45,7 @@ impl Position {
         self.king_moves(&mut moves);
         if checkers == 0 {
             self.gen_pnbrq(&mut moves, u64::MAX, u64::MAX, pinned);
-            self.castles(&mut moves, self.occ());
+            self.castles(&mut moves, self.occ()  ^ (1 << king_idx));
         } else if checkers & (checkers - 1) == 0 {
             let checker_sq = checkers.trailing_zeros() as usize;
             let free = IN_BETWEEN[king_idx][checker_sq];

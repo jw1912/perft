@@ -28,7 +28,7 @@ fn main() {
         println!("Position: {fen}");
 
         let now = Instant::now();
-        let count = perft::<false, false>(&pos, d);
+        let count = perft::<false, true>(&pos, d);
         total += count;
         assert_eq!(count, exp);
 
