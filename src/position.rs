@@ -1,6 +1,6 @@
 use super::{
     attacks::Attacks,
-    consts::{CASTLE_MASK, Flag, Piece, ROOK_MOVES},
+    consts::{CASTLE_MASK, Flag, Piece, ROOK_MOVES, Side},
 };
 
 #[derive(Copy, Clone, Default)]
@@ -19,7 +19,40 @@ pub struct Move {
     pub moved: u8,
 }
 
+impl Move {
+    #[must_use]
+    pub fn to_uci(self) -> String {
+        let idx_to_sq = |i| format!("{}{}", ((i & 7) + b'a') as char, (i / 8) + 1);
+        let promo = if self.flag & 0b1000 > 0 {["n","b","r","q"][(self.flag & 0b11) as usize]} else {""};
+        format!("{}{}{}", idx_to_sq(self.from), idx_to_sq(self.to), promo)
+    }
+}
+
 impl Position {
+    #[must_use]
+    #[inline]
+    pub fn occ(&self) -> u64 {
+        self.bb[Side::WHITE] | self.bb[Side::BLACK]
+    }
+
+    #[must_use]
+    #[inline]
+    pub fn king_index(&self) -> usize {
+        (self.bb[Piece::KING] & self.bb[usize::from(self.side)]).trailing_zeros() as usize
+    }
+
+    #[must_use]
+    #[inline]
+    pub fn boys(&self) -> u64 {
+        self.bb[usize::from(self.side)]
+    }
+
+    #[must_use]
+    #[inline]
+    pub fn opps(&self) -> u64 {
+        self.bb[usize::from(!self.side)]
+    }
+
     #[inline]
     pub fn toggle(&mut self, side: usize, piece: usize, bit: u64) {
         self.bb[piece] ^= bit;
@@ -28,13 +61,19 @@ impl Position {
 
     #[must_use]
     #[inline]
-    pub fn is_sq_att(&self, sq: usize, side: usize, occ: u64) -> bool {
+    pub fn attackers_to_square(&self, sq: usize, side: usize, occ: u64) -> u64 {
         ( (Attacks::knight(sq)       & self.bb[Piece::KNIGHT])
         | (Attacks::king  (sq)       & self.bb[Piece::KING  ])
-        | (Attacks::pawn  (side, sq) & self.bb[Piece::PAWN  ])
+        | (Attacks::pawn  (sq, side) & self.bb[Piece::PAWN  ])
         | (Attacks::rook  (sq, occ) & (self.bb[Piece::ROOK  ] ^ self.bb[Piece::QUEEN]))
         | (Attacks::bishop(sq, occ) & (self.bb[Piece::BISHOP] ^ self.bb[Piece::QUEEN]))
-        ) & self.bb[side ^ 1] > 0
+        ) & self.bb[side ^ 1]
+    }
+
+    #[must_use]
+    #[inline]
+    pub fn is_square_attacked(&self, sq: usize, side: usize, occ: u64) -> bool {
+        self.attackers_to_square(sq, side, occ) > 0
     }
 
     #[must_use]
@@ -46,7 +85,7 @@ impl Position {
         0
     }
 
-    pub fn make(&mut self, mov: Move) -> bool {
+    pub fn make(&mut self, mov: Move) {
         // extracting move info
         let side = usize::from(self.side);
         let bb_from = 1 << mov.from;
@@ -88,9 +127,5 @@ impl Position {
             }
             _ => {}
         }
-
-        // is move legal?
-        let king_sq = (self.bb[Piece::KING] & self.bb[side]).trailing_zeros();
-        self.is_sq_att(king_sq as usize, side, self.bb[0] | self.bb[1])
     }
 }
