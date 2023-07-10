@@ -86,7 +86,7 @@ impl Position {
         let side = usize::from(self.side);
         let pinned_pawns = pawns & pinned;
         let free_pawns = pawns & !pinned;
-        let pawn_check_mask = if checkers == u64::MAX { u64::MAX } else { checkers ^ check_mask };
+        let pawn_check_mask = if checkers == u64::MAX { u64::MAX } else { check_mask & !checkers };
 
         if side == Side::WHITE {
             self.pawn_pushes::<{ Side::WHITE }, false>(moves, free_pawns  , pawn_check_mask);
@@ -144,16 +144,19 @@ impl Position {
         let occ = self.occ();
         let boys = self.boys();
         let kidx = self.king_index();
+        let opps = self.opps();
+        let rq = self.bb[Piece::QUEEN] | self.bb[Piece::ROOK];
+        let bq = self.bb[Piece::QUEEN] | self.bb[Piece::BISHOP];
         let mut pinned = 0;
 
         let mut sq;
-        let mut pinners = Attacks::xray_rook(kidx, occ, boys);
+        let mut pinners = Attacks::xray_rook(kidx, occ, boys) & opps & rq;
         while pinners > 0 {
             pop_lsb!(sq, pinners);
             pinned |= IN_BETWEEN[usize::from(sq)][kidx] & boys;
         }
 
-        pinners = Attacks::xray_bishop(kidx, occ, boys);
+        pinners = Attacks::xray_bishop(kidx, occ, boys) & opps & bq;
         while pinners > 0 {
             pop_lsb!(sq, pinners);
             pinned |= IN_BETWEEN[usize::from(sq)][kidx] & boys;

@@ -12,7 +12,7 @@ use position::Position;
 use std::time::Instant;
 
 const POSITIONS: [(&str, u8, u64); 5] = [
-    ("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 1, 119_060_324),
+    ("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1", 6, 119_060_324),
     ("r3k2r/p1ppqpb1/bn2pnp1/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1", 5, 193_690_690,),
     ("8/2p5/3p4/KP5r/1R3p1k/8/4P1P1/8 w - -", 7, 178_633_661),
     ("rnbq1k1r/pp1Pbppp/2p5/8/2B5/8/PPP1NnPP/RNBQK2R w KQ - 1 8", 5, 89_941_194),
@@ -27,7 +27,7 @@ fn main() {
         println!("Position: {fen}");
 
         let now = Instant::now();
-        let count = perft(&pos, d);
+        let count = perft::<true>(&pos, d);
         total += count;
         assert_eq!(count, exp);
 
@@ -48,7 +48,7 @@ fn main() {
 }
 
 #[must_use]
-pub fn perft(pos: &Position, depth: u8) -> u64 {
+pub fn perft<const ROOT: bool>(pos: &Position, depth: u8) -> u64 {
     let mut tmp;
     let mut positions = 0;
     let moves = pos.gen();
@@ -56,11 +56,9 @@ pub fn perft(pos: &Position, depth: u8) -> u64 {
         tmp = *pos;
         tmp.make(moves.list[m_idx]);
 
-        positions += if depth > 1 {
-            perft(&tmp, depth - 1)
-        } else {
-            1
-        };
+        let num = if depth > 1 { perft::<false>(&tmp, depth - 1) } else { 1 };
+        positions += num;
+        if ROOT { println!("{}: {num}", moves.list[m_idx].to_uci())}
     }
     positions
 }

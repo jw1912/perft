@@ -19,6 +19,15 @@ pub struct Move {
     pub moved: u8,
 }
 
+impl Move {
+    #[must_use]
+    pub fn to_uci(self) -> String {
+        let idx_to_sq = |i| format!("{}{}", ((i & 7) + b'a') as char, (i / 8) + 1);
+        let promo = if self.flag & 0b1000 > 0 {["n","b","r","q"][(self.flag & 0b11) as usize]} else {""};
+        format!("{}{}{}", idx_to_sq(self.from), idx_to_sq(self.to), promo)
+    }
+}
+
 impl Position {
     #[must_use]
     #[inline]
