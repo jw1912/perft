@@ -1,8 +1,8 @@
 # perft
 
-A fast perft implementation, mostly a testing repo for akimbo.
+A fast perft implementation.
 
-This perft is single-threaded, no bulk counting with pseudo-legal movegen.
+This perft is single-threaded, optional bulk counting with legal movegen.
 
 ## What is perft?
 Perft is a simple test to see if move generation and making/unmaking moves works correctly.
