@@ -45,11 +45,11 @@ impl Position {
         self.king_moves(&mut moves);
         if checkers == 0 {
             self.gen_pnbrq(&mut moves, u64::MAX, u64::MAX, pinned);
-            self.castles(&mut moves, self.occ()  ^ (1 << king_idx));
+            self.castles(&mut moves, self.occ());
         } else if checkers & (checkers - 1) == 0 {
             let checker_sq = checkers.trailing_zeros() as usize;
             let free = IN_BETWEEN[king_idx][checker_sq];
-            self.gen_pnbrq(&mut moves, checkers, free | checkers, pinned);
+            self.gen_pnbrq(&mut moves, checkers, free, pinned);
         }
 
         moves
@@ -80,20 +80,20 @@ impl Position {
         }
     }
 
-    fn gen_pnbrq(&self, moves: &mut MoveList, checkers: u64, check_mask: u64, pinned: u64) {
+    fn gen_pnbrq(&self, moves: &mut MoveList, checkers: u64, free: u64, pinned: u64) {
         let boys = self.bb[usize::from(self.side)];
         let pawns = self.bb[Piece::PAWN] & boys;
         let side = usize::from(self.side);
         let pinned_pawns = pawns & pinned;
         let free_pawns = pawns & !pinned;
-        let pawn_check_mask = if checkers == u64::MAX { u64::MAX } else { check_mask & !checkers };
+        let check_mask = free | checkers;
 
         if side == Side::WHITE {
-            self.pawn_pushes::<{ Side::WHITE }, false>(moves, free_pawns  , pawn_check_mask);
-            self.pawn_pushes::<{ Side::WHITE }, true >(moves, pinned_pawns, pawn_check_mask);
+            self.pawn_pushes::<{ Side::WHITE }, false>(moves, free_pawns  , free);
+            self.pawn_pushes::<{ Side::WHITE }, true >(moves, pinned_pawns, free);
         } else {
-            self.pawn_pushes::<{ Side::BLACK }, false>(moves, free_pawns  , pawn_check_mask);
-            self.pawn_pushes::<{ Side::BLACK }, true >(moves, pinned_pawns, pawn_check_mask);
+            self.pawn_pushes::<{ Side::BLACK }, false>(moves, free_pawns  , free);
+            self.pawn_pushes::<{ Side::BLACK }, true >(moves, pinned_pawns, free);
         }
         if self.enp_sq > 0 {
             self.en_passants(moves, pawns);
@@ -185,7 +185,8 @@ impl Position {
                 Piece::QUEEN  => Attacks::queen (usize::from(from), occ),
                 Piece::KING   => Attacks::king  (usize::from(from)),
                 _ => 0,
-            } & check_mask;
+            };
+            attacks &= check_mask;
             if PINNED {
                 attacks &= LINE_THROUGH[self.king_index()][usize::from(from)];
             }
