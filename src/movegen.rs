@@ -36,7 +36,10 @@ fn encode<const PC: usize, const FLAG: u8>(moves: &mut MoveList, mut attacks: u6
 impl Position {
     #[must_use]
     pub fn gen(&self) -> MoveList {
-        let mut moves = MoveList { list: [Move::default(); 252], len: 0 };
+        let mut moves = MoveList {
+            list: [Move::default(); 252],
+            len: 0
+        };
 
         let checkers = self.checkers();
         let pinned   = self.pinned();
@@ -173,6 +176,7 @@ impl Position {
 
     fn piece_moves_internal<const PC: usize, const PINNED: bool>(&self, moves: &mut MoveList, check_mask: u64, mut attackers: u64) {
         let occ = self.occ();
+        let king_sq = self.king_index();
 
         let mut from;
         let mut attacks;
@@ -188,7 +192,7 @@ impl Position {
             };
             attacks &= check_mask;
             if PINNED {
-                attacks &= LINE_THROUGH[self.king_index()][usize::from(from)];
+                attacks &= LINE_THROUGH[king_sq][usize::from(from)];
             }
             encode::<PC, { Flag::CAP   }>(moves, attacks & self.opps(), from);
             encode::<PC, { Flag::QUIET }>(moves, attacks & !occ, from);
