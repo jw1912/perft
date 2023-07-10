@@ -16,7 +16,7 @@ pub struct Attacks;
 
 impl Attacks {
     #[inline]
-    pub fn pawn(side: usize, sq: usize) -> u64 {
+    pub fn pawn(sq: usize, side: usize) -> u64 {
         LOOKUP.pawn[side][sq]
     }
 
@@ -70,6 +70,18 @@ impl Attacks {
     #[inline]
     pub fn queen(sq: usize, occ: u64) -> u64 {
         Self::bishop(sq, occ) | Self::rook(sq, occ)
+    }
+
+    #[inline]
+    pub fn xray_rook(sq: usize, occ: u64, blockers: u64) -> u64 {
+        let attacks = Self::rook(sq, occ);
+        attacks ^ Self::rook(sq, occ ^ (attacks & blockers))
+    }
+
+    #[inline]
+    pub fn xray_bishop(sq: usize, occ: u64, blockers: u64) -> u64 {
+        let attacks = Self::bishop(sq, occ);
+        attacks ^ Self::bishop(sq, occ ^ (attacks & blockers))
     }
 }
 
@@ -173,3 +185,32 @@ const RANK: [[u64; 64]; 64] = init! {sq,
 const FILE: [[u64; 64]; 64] = init! {sq,
     init! {occ, (RANK[7 - sq / 8][occ].wrapping_mul(DIAG) & File::H) >> (7 - (sq & 7))}
 };
+
+pub const fn line_through(i: usize, j: usize) -> u64 {
+    let sq = 1 << j;
+
+    let rank = i / 8;
+    let file = i % 8;
+
+    let files = File::A << file;
+    if files & sq > 0 {
+        return files;
+    }
+
+    let ranks = 0xFF << (8 * rank);
+    if ranks & sq > 0 {
+        return ranks;
+    }
+
+    let diags = DIAGS[7 + file - rank];
+    if diags & sq > 0 {
+        return diags;
+    }
+
+    let antis = DIAGS[    file + rank].swap_bytes();
+    if antis & sq > 0 {
+        return antis;
+    }
+
+    0
+}

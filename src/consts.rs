@@ -42,10 +42,6 @@ impl Right {
     pub const WKS: u8 = 0b0100;
     pub const BQS: u8 = 0b0010;
     pub const BKS: u8 = 0b0001;
-    pub const SIDE: [u8; 2] = [
-        Self::WKS | Self::WQS,
-        Self::BKS | Self::BQS,
-    ];
     pub const TABLE: [[u8; 2]; 2] = [
         [Self::WQS, Self::WKS],
         [Self::BQS, Self::BKS],
@@ -91,3 +87,46 @@ impl Rank {
     pub const DBL: [u64; 2] = [0x0000_0000_FF00_0000, 0x0000_00FF_0000_0000];
 }
 
+pub const IN_BETWEEN: [[u64; 64]; 64] = {
+    let mut arr = [[0; 64]; 64];
+    let mut i = 0;
+    while i < 64 {
+        let mut j = 0;
+        while j < 64 {
+            arr[i][j] = in_between(i, j);
+            j += 1;
+        }
+        i += 1;
+    }
+    arr
+};
+
+pub const LINE_THROUGH: [[u64; 64]; 64] = {
+    let mut arr = [[0; 64]; 64];
+    let mut i = 0;
+    while i < 64 {
+        let mut j = 0;
+        while j < 64 {
+            arr[i][j] = crate::attacks::line_through(i, j);
+            j += 1;
+        }
+        i += 1;
+    }
+    arr
+};
+
+const fn in_between(sq1: usize, sq2: usize) -> u64 {
+    const M1: u64   = 0xFFFF_FFFF_FFFF_FFFF;
+    const A2A7: u64 = 0x0001_0101_0101_0100;
+    const B2G7: u64 = 0x0040_2010_0804_0200;
+    const H1B7: u64 = 0x0002_0408_1020_4080;
+    let btwn = (M1 << sq1) ^ (M1 << sq2);
+    let file = ((sq2 & 7).wrapping_add((sq1 & 7).wrapping_neg())) as u64;
+    let rank = (((sq2 | 7).wrapping_sub(sq1)) >> 3) as u64;
+    let mut line = ((file & 7).wrapping_sub(1)) & A2A7;
+    line += 2 * ((rank & 7).wrapping_sub(1) >> 58);
+    line += ((rank.wrapping_sub(file) & 15).wrapping_sub(1)) & B2G7;
+    line += ((rank.wrapping_add(file) & 15).wrapping_sub(1)) & H1B7;
+    line = line.wrapping_mul(btwn & btwn.wrapping_neg());
+    line & btwn
+}
