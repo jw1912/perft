@@ -57,7 +57,7 @@ fn main() {
     for PerftResult { pos, fen, results } in positions {
         println!("{fen}");
         for (d, &res) in results.iter().enumerate() {
-            let count = perft::<false, true>(&pos, d as u8 + 1);
+            let count = perft::<false, false>(&pos, d as u8 + 1);
             total += count;
             assert_eq!(count, res);
         }
