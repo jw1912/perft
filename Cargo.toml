@@ -1,5 +1,8 @@
-[workspace]
-members = ["mailbox-10x12", "bitboard", "quad-bitboard"]
+[package]
+name = "perft"
+version = "0.1.0"
+edition = "2021"
+authors = ["Jamie Whiting"]
 
 [profile.release]
 panic = 'abort'
